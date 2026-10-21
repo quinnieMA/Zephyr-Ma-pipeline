@@ -1,2 +1,50 @@
 # Zephyr-Ma-pipeline
 Lossless, audit-first pipeline that turns raw BvD Zephyr M&amp;A exports into a deal-level research database (CSV + Stata .dta). Every merge key is explicit; every dropped row is logged.
+
+.
+├── config.py                     # shared paths (ZEPHYR_BASE, BASE_DIR, …)
+├── data/
+│   ├── cleaned/                  # 01-stage outputs
+│   │   ├── 01_deal_structure_date.csv
+│   │   ├── 01_deal_sic_industry.csv
+│   │   ├── 01_deal_multiple.csv
+│   │   ├── 01_deal_value.csv
+│   │   ├── 01_deal_overview.csv
+│   │   ├── 01b_deal_info_source_count.csv
+│   │   ├── 01b_deal_vendor_type.csv
+│   │   └── 01c_comments_features.csv
+│   └── merged/                   # 02–07 outputs
+│       ├── 02_deal_master.csv
+│       ├── 02_entity_pairs.csv
+│       ├── 03_firm_deal_level.csv
+│       ├── 03_firm_entity_pairs.csv
+│       ├── 04_deal_firm_full.csv
+│       ├── 05_deal_firm_filtered.csv
+│       ├── 06a_merge_comment_vendor.csv
+│       ├── 06b_text_peer.csv
+│       └── 07_full_sample.csv / .dta
+├── scripts/
+│   ├── 01a_clean_structure_date.py
+│   ├── 01a_clean_industry.py
+│   ├── 01a_clean_multiple.py
+│   ├── 01a_clean_value.py
+│   ├── 01a_clean_overview.py
+│   ├── 01b_clean_vendor_type.py
+│   ├── 01b_clean_info_source.py
+│   ├── 01c_comments_features.py
+│   ├── 02_merge_deal_master.py
+│   ├── 03_clean_firm_modules.py
+│   ├── 04_merge_firm_to_deal.py
+│   ├── 05_sample_filter.py
+│   ├── 06a_merge_comment_vendor.py
+│   ├── 06b_text_peer_multiple.py
+│   └── 07_full_sample.py
+└── logs/                         # per-stage *.txt diagnostics
+
+Requirements
+    pandas>=2.0
+    numpy>=1.24
+    pyreadstat>=1.2
+    gensim>=4.3
+    tqdm>=4.65
+    stanfordcorenlp>=3.9        # optional — vendor NER stage only
