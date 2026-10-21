@@ -1,0 +1,198 @@
+==============================================================================
+Module 01a — Overview 诊断输出 (NO acquirer aggregation)
+PRIMARY KEY: deal_num + tar_name + acq_name + tar_bvd_id_num + acq_bvd_id_num
+==============================================================================
+Input file: D:\zephyr\overview\cleaned_output\MA_overview.csv
+  [read] file=MA_overview.csv | rows=1,459,280 | cols=35
+Raw rows read: 1,459,280
+Dropped 1 columns (index / __1 duplicates)
+Columns kept: 33 / 33
+Full raw rows (before dedup): 1,459,280
+
+============================================================
+M3 — Vendor‑name aggregation -> 01a_deal_vendor_name.csv
+============================================================
+  ven_name                 530,985 deals | multi 116,872 | mean 1.44
+  ven_bvd_id_num           352,267 deals | multi 35,020 | mean 1.22
+  Saved -> D:\MA\data\cleaned\01a_deal_vendor_name.csv (530,985 deals)
+
+============================================================
+Building regulatory variables from full raw data (all reg rows reserved)
+============================================================
+  [FIX] tar_ctry / acq_ctry normalised (strip + upper + alias map)
+Drop blank tar_name rows: 369,984 removed
+  [DEDUP-T1_5key] 1,089,296 -> 1,089,266 rows (dropped 30 pure duplicates)
+  [DEDUP-T1_5key] unique deal_num: 1,011,206 | 多标的/多收购方 deal: 48,360（保留多行，未折叠）
+  [UNIT] rows=1,089,266 | unique composite PK=1,089,266
+  [FIX] deal_value_ovw <= 0 set to NaN: 1 rows
+
+Reg agg stats: total deals with reg info = 71,173
+reg_body_count min/max/mean: 1 / 18 / 1.23
+
+Category count summary:
+  reg_antitrust = 40,837
+  reg_securities = 10,622
+  reg_state_assets = 8,497
+  reg_foreign_invest = 4,900
+  reg_financial = 4,361
+  reg_defense_tech = 594
+
+Regulatory variables merge complete, real multi‑count enabled
+  [FIX] regulatory_bodies non‑null = 81,602 / 1,089,266 (7.49%) — kept as NaN when absent
+
+============================================================
+STEP 5 — Cross‑border / Cross‑country variables
+============================================================
+  cross_border = 1: 211,050 deals
+  cross_border = 0: 705,387 deals
+  cross_border missing: 172,829 deals
+
+============================================================
+STEP 6 — Country‑level Legal Origin & Classification Distance
+============================================================
+  Unmapped target countries (top 10): {'PH': 2412, 'WS': 567, 'MD': 521, 'GE': 504, 'KG': 416, 'BW': 379, 'AZ': 335, 'CR': 327, 'EC': 317, 'NP': 314}
+  Unmapped acquirer countries (top 10): {'PH': 1673, 'WS': 688, 'NP': 270, 'KG': 216, 'BW': 180, 'SC': 176, 'AZ': 165, 'BS': 161, 'GE': 157, 'LI': 144}
+  common_law_tar = 1: 449,315 deals
+  common_law_acq = 1: 418,845 deals
+
+  Cross‑border deals legal origin breakdown:
+    Both Common: 60,845
+    Target Common Only: 30,125
+    Acquirer Common Only: 46,745
+    Neither Common: 66,110
+
+  classification_distance_tar: 1,063,169/1,089,266 obs mapped (97.6%)
+  classification_distance_acq: 917,149/1,089,266 obs mapped (84.2%)
+  [FIX] created tar_country_code from tar_ctry (non‑null 1,077,389 / 1,089,266)
+  [FIX] created acq_country_code from acq_ctry (non‑null 924,929 / 1,089,266)
+  Dropped 24 columns: ['deal_headline', 'deal_type', 'deal_status', 'tar_ctry', 'acq_ctry', 'tar_busi_descr', 'tar_orbis_id_num', 'acq_busi_descr', 'acq_orbis_id_num', 'gr_acq_name', 'gr_acq_ctry', 'gr_acq_busi_descr', 'gr_acq_bvd_id_num', 'gr_acq_orbis_id_num', 'ven_name', 'ven_ctry', 'ven_busi_descr', 'ven_bvd_id_num', 'ven_orbis_id_num', 'gr_ven_name', 'gr_ven_ctry', 'gr_ven_busi_descr', 'gr_ven_bvd_id_num', 'gr_ven_orbis_id_num']
+
+------------------------------------------------------------
+ROW COUNT SUMMARY
+------------------------------------------------------------
+  raw rows (before dedup)         : 1,459,280
+  rows after dedup                : 1,089,266
+  unique deal_num                 : 1,011,206
+  unique composite PK(deal_num,tar_name,acq_name,tar_bvd_id_num,acq_bvd_id_num) : 1,089,266
+
+------------------------------------------------------------
+COLUMN COVERAGE (ALL OUTPUT VARIABLES)
+------------------------------------------------------------
+  deal_num                            non-null  1,089,266 (100.00%)  missing          0 (  0.00%)
+  tar_name                            non-null  1,089,266 (100.00%)  missing          0 (  0.00%)
+  tar_bvd_id_num                      non-null    781,747 ( 71.77%)  missing    307,519 ( 28.23%)
+  acq_name                            non-null    959,599 ( 88.10%)  missing    129,667 ( 11.90%)
+  acq_bvd_id_num                      non-null    806,118 ( 74.01%)  missing    283,148 ( 25.99%)
+  reg_body_name                       non-null     72,210 (  6.63%)  missing  1,017,056 ( 93.37%)
+  reg_body_ctry                       non-null     72,210 (  6.63%)  missing  1,017,056 ( 93.37%)
+  deal_opportunity_type               non-null     75,292 (  6.91%)  missing  1,013,974 ( 93.09%)
+  deal_value_ovw                      non-null    414,665 ( 38.07%)  missing    674,601 ( 61.93%)
+  regulatory_bodies                   non-null     81,602 (  7.49%)  missing  1,007,664 ( 92.51%)
+  regulatory_countries                non-null     81,602 (  7.49%)  missing  1,007,664 ( 92.51%)
+  reg_body_count                      non-null  1,089,266 (100.00%)  missing          0 (  0.00%)
+  reg_country_count                   non-null  1,089,266 (100.00%)  missing          0 (  0.00%)
+  reg_antitrust                       non-null  1,089,266 (100.00%)  missing          0 (  0.00%)
+  reg_securities                      non-null  1,089,266 (100.00%)  missing          0 (  0.00%)
+  reg_state_assets                    non-null  1,089,266 (100.00%)  missing          0 (  0.00%)
+  reg_foreign_invest                  non-null  1,089,266 (100.00%)  missing          0 (  0.00%)
+  reg_financial                       non-null  1,089,266 (100.00%)  missing          0 (  0.00%)
+  reg_defense_tech                    non-null  1,089,266 (100.00%)  missing          0 (  0.00%)
+  reg_cross_national                  non-null  1,089,266 (100.00%)  missing          0 (  0.00%)
+  reg_common_law                      non-null  1,089,266 (100.00%)  missing          0 (  0.00%)
+  reg_civil_law                       non-null  1,089,266 (100.00%)  missing          0 (  0.00%)
+  reg_mixed_legal                     non-null  1,089,266 (100.00%)  missing          0 (  0.00%)
+  cross_border                        non-null    916,437 ( 84.13%)  missing    172,829 ( 15.87%)
+  cross_country                       non-null    916,437 ( 84.13%)  missing    172,829 ( 15.87%)
+  legal_origin_tar                    non-null  1,065,332 ( 97.80%)  missing     23,934 (  2.20%)
+  common_law_tar                      non-null  1,065,332 ( 97.80%)  missing     23,934 (  2.20%)
+  classification_distance_tar         non-null  1,063,169 ( 97.60%)  missing     26,097 (  2.40%)
+  legal_origin_acq                    non-null    918,873 ( 84.36%)  missing    170,393 ( 15.64%)
+  common_law_acq                      non-null    918,873 ( 84.36%)  missing    170,393 ( 15.64%)
+  classification_distance_acq         non-null    917,149 ( 84.20%)  missing    172,117 ( 15.80%)
+  classification_distance             non-null  1,063,169 ( 97.60%)  missing     26,097 (  2.40%)
+  tar_country_code                    non-null  1,077,389 ( 98.91%)  missing     11,877 (  1.09%)
+  acq_country_code                    non-null    924,929 ( 84.91%)  missing    164,337 ( 15.09%)
+
+------------------------------------------------------------
+NUMERIC SUMMARY (ALL NUMERIC VARIABLES)
+------------------------------------------------------------
+  [deal_num] N=1,089,266 | min=3.086e+04 | p25=1.601e+09 | median=1.909e+09 | p75=1.943e+09 | max=2.009e+09 | mean=1.444e+09
+  [deal_value_ovw] N=414,665 | min=4.376e-05 | p25=1986 | median=1.126e+04 | p75=6.419e+04 | max=8.75e+09 | mean=3.169e+05
+  [reg_body_count] N=1,089,266 | min=0 | p25=0 | median=0 | p75=0 | max=18 | mean=0.09232
+  [reg_country_count] N=1,089,266 | min=0 | p25=0 | median=0 | p75=0 | max=14 | mean=0.07966
+  [reg_antitrust] N=1,089,266 | min=0 | p25=0 | median=0 | p75=0 | max=1 | mean=0.04388
+  [reg_securities] N=1,089,266 | min=0 | p25=0 | median=0 | p75=0 | max=1 | mean=0.01122
+  [reg_state_assets] N=1,089,266 | min=0 | p25=0 | median=0 | p75=0 | max=1 | mean=0.008473
+  [reg_foreign_invest] N=1,089,266 | min=0 | p25=0 | median=0 | p75=0 | max=1 | mean=0.004951
+  [reg_financial] N=1,089,266 | min=0 | p25=0 | median=0 | p75=0 | max=1 | mean=0.004556
+  [reg_defense_tech] N=1,089,266 | min=0 | p25=0 | median=0 | p75=0 | max=1 | mean=0.0006674
+  [reg_cross_national] N=1,089,266 | min=0 | p25=0 | median=0 | p75=0 | max=1 | mean=0.002971
+  [reg_common_law] N=1,089,266 | min=0 | p25=0 | median=0 | p75=0 | max=1 | mean=0.02033
+  [reg_civil_law] N=1,089,266 | min=0 | p25=0 | median=0 | p75=0 | max=1 | mean=0.0508
+  [reg_mixed_legal] N=1,089,266 | min=0 | p25=0 | median=0 | p75=0 | max=1 | mean=0.0008409
+  [cross_border] N=916,437 | min=0 | p25=0 | median=0 | p75=0 | max=1 | mean=0.2303
+  [cross_country] N=916,437 | min=0 | p25=0 | median=0 | p75=0 | max=1 | mean=0.2303
+  [common_law_tar] N=1,065,332 | min=0 | p25=0 | median=0 | p75=1 | max=1 | mean=0.4218
+  [classification_distance_tar] N=1,063,169 | min=0 | p25=1 | median=2 | p75=2 | max=4 | mean=1.647
+  [common_law_acq] N=918,873 | min=0 | p25=0 | median=0 | p75=1 | max=1 | mean=0.4558
+  [classification_distance_acq] N=917,149 | min=0 | p25=1 | median=2 | p75=2 | max=4 | mean=1.58
+  [classification_distance] N=1,063,169 | min=0 | p25=1 | median=2 | p75=2 | max=4 | mean=1.647
+
+------------------------------------------------------------
+CATEGORICAL SUMMARY (NON-NUMERIC VARIABLES)
+------------------------------------------------------------
+  [tar_name] 1,089,266 valid | unique values: 936,153
+  [tar_bvd_id_num] 781,747 valid | unique values: 629,813
+  [acq_name] 959,599 valid | unique values: 456,627
+  [acq_bvd_id_num] 806,118 valid | unique values: 330,691
+  [reg_body_name] 72,210 valid | unique values: 868
+  [reg_body_ctry] 72,210 valid | unique values: 126
+  [deal_opportunity_type] 75,292 valid | unique values: 3
+  [regulatory_bodies] 81,602 valid | unique values: 3,735
+  [regulatory_countries] 81,602 valid | unique values: 1,005
+  [legal_origin_tar] 1,065,332 valid | unique values: 4
+  [legal_origin_acq] 918,873 valid | unique values: 4
+  [tar_country_code] 1,077,389 valid | unique values: 215
+  [acq_country_code] 924,929 valid | unique values: 206
+
+------------------------------------------------------------
+TOP20 TARGET COUNTRY (RAW overview universe)
+------------------------------------------------------------
+tar_country_code
+US    200503
+CN    109628
+GB     85666
+ES     47716
+JP     46826
+RU     43763
+DE     37988
+FR     30168
+AU     29779
+CA     29676
+NL     26799
+PL     25051
+IT     23438
+IN     23225
+FI     19258
+SE     17708
+MY     16738
+KR     13973
+UA     11799
+BR     11757
+
+[Appendix] Subset with regulatory records N=81,602 rows (unique deal 71,124)
+  reg* variables are non-zero only within this subset:
+tar_country_code
+CN    13525
+RU     8365
+US     6589
+DE     4668
+ZA     2943
+UA     2673
+BR     2599
+IN     2462
+AU     2272
+GB     2266
+
+  [01_deal_overview.csv] saved -> D:\MA\data\cleaned\01_deal_overview.csv (176255 KB)
+  [01a_overview.txt] log saved -> D:\MA\data\cleaned\01a_overview.txt

@@ -1,0 +1,75 @@
+
+##############################################################################
+# 01a run — 01a_clean_value.py
+# started : 2026-10-16 21:16:44
+# cwd     : D:\MA\data
+# pandas  : 2.3.3
+##############################################################################
+
+==============================================================================
+Module M4 — Deal value / stake export -> 01_deal_value.csv (FIXED)
+==============================================================================
+  [value] loaded: 1,144,984 rows | 20 cols | unique deal_num: 1,066,213
+  after dropna(deal_num): 1,141,744 rows
+  [map:value] not found (will be NaN): ['deal_value', 'deal_enterprise_value', 'currency']
+
+  [FIX-3] 金额列 <= 0 -> NaN
+    deal_val_usd                 <=0 置 NaN: 1
+
+  [FIX-4] 持股列限 (0, 100]
+    stake_acq_pct                越界置 NaN: 2,279
+    stake_final_pct              越界置 NaN: 561
+--- checkpoint before aggregation @ 21:16:44 ---
+
+  [AGG:value] rows 1,141,744 -> 1,066,213 (unique deal_num)
+
+  [GAIN] value — keep='first' vs groupby.first() 非空数
+    column                         keep-first   aggregated         gain
+    --------------------------------------------------------------------
+    deal_val_usd                      394,126      394,126           +0
+    stake_acq_pct                     902,348      903,049         +701
+    stake_final_pct                   944,111      944,986         +875
+
+  [01_deal_value.csv] COVERAGE DIAGNOSTICS — 1,066,213 rows
+    Column                                     Non-Null     Pct      Missing     Pct
+    --------------------------------------------------------------------------------
+    deal_num                                  1,066,213 100.00%            0   0.00%
+    src_file                                  1,066,213 100.00%            0   0.00%
+    unnamed_0                                 1,066,213 100.00%            0   0.00%
+    deal_val_usd                                394,126  36.97%      672,087  63.03%
+    deal_val_nat                                394,127  36.97%      672,086  63.03%
+    deal_eq_val_usd                             148,651  13.94%      917,562  86.06%
+    deal_eq_val_nat                             148,651  13.94%      917,562  86.06%
+    deal_ent_val_usd                             28,688   2.69%    1,037,525  97.31%
+    deal_ent_val_nat                             28,688   2.69%    1,037,525  97.31%
+    deal_ent_val_mod_usd                         92,226   8.65%      973,987  91.35%
+    deal_ent_val_mod_nat                         92,226   8.65%      973,987  91.35%
+    deal_tar_val_tot_usd                        338,453  31.74%      727,760  68.26%
+    deal_tar_val_tot_nat                        338,453  31.74%      727,760  68.26%
+    fee_income_mod_usd                          299,096  28.05%      767,117  71.95%
+    fee_income_rep_usd                              272   0.03%    1,065,941  99.97%
+    stake_init_pct                            1,018,117  95.49%       48,096   4.51%
+    stake_acq_pct                               903,049  84.70%      163,164  15.30%
+    stake_final_pct                             944,986  88.63%      121,227  11.37%
+    irr_pct                                         322   0.03%    1,065,891  99.97%
+    deal_ccy                                    416,075  39.02%      650,138  60.98%
+
+  [01_deal_value.csv] DESCRIPTIVE STATS — numeric (6)
+    column                                  min         median           mean            max            std
+    --------------------------------------------------------------------------------------------------------
+    deal_num                          30,857.00  1,909,134,341  1,441,176,890  2,008,992,867    795,913,475
+    unnamed_0                              1.00      25,976.00      26,067.16      52,631.00      15,260.54
+    deal_val_usd                           0.00      10,613.97     331,219.29  8,749,726,610     14,261,748
+    stake_acq_pct                          0.00         100.00          88.25         100.00          24.88
+    stake_final_pct                        0.71         100.00          96.42         100.00          11.19
+    irr_pct                                0.00          38.00          58.34         800.00          84.04
+
+  [FIX-8] 论文筛选条件的命中比例
+    (论文: 非上市标的 + 控股 >= 50%)
+    p(stake_acq_pct >= 50) : 0.7715  (n=822,580)
+    p(stake_final_pct >= 50) : 0.8862  (n=944,866)
+    p(deal_val_usd > 0)   : 0.3697  (n=394,126)
+
+  [vs main] unique deal_num: 1,066,213 (structure_date: 1,066,213, diff=+0)
+
+  Module 4: 1,066,213 rows written -> D:\MA\data\cleaned\01_deal_value.csv

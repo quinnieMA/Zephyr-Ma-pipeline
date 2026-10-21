@@ -1,0 +1,342 @@
+
+##############################################################################
+# 01a run — 01a_clean_structure_date.py
+# started : 2026-10-21 13:29:31
+# cwd     : C:\Users\13601
+# python  : 3.13.9
+# pandas  : 2.3.3
+##############################################################################
+
+==============================================================================
+Module M2.3+M6 — Structure & dates export -> 01_deal_structure_date.csv
+==============================================================================
+  [structure_date] loaded: 1,293,380 rows | 24 cols | unique deal_num: 1,066,213
+
+  after dropna(deal_num): 1,293,380 rows
+--- checkpoint after load @ 13:30:22 ---
+
+  -- Building Payment Method Variables --
+  Payment classification done. Deals with payment info: 308,591
+  Pure Cash: 170,879 | Pure Shares: 41,664 | Mix: 71,479
+
+CATEGORICAL AGG (struct, fin, type)
+  [deal_struct] 307,677 deals | multi 55,584
+  [deal_fin] 154,222 deals | multi 61,477
+  [deal_type] 1,066,213 deals | multi 0
+  after aggregation + dedup + pay merge: 1,066,213 rows
+--- checkpoint after aggregation @ 13:34:43 ---
+
+  -- Processing Dates --
+  [rumor] found rumor date column: rumour_d
+  rumor_lead_days computed successfully. Non-null: 897,698
+
+  -- Rumor lead distribution --
+     == 0 : 821,714  (91.5%)
+     <  0 : 2  (0.00%)
+    >= 3    :  74,043  (8.25%)
+    >= 30   :  58,615  (6.53%)
+    >= 90   :  36,577  (4.07%)
+    >= 365  :   8,956  (1.00%)
+    >= 730  :   2,140  (0.24%)
+    >= 1825 :     112  (0.01%)
+
+  >> rumor (lead >= 3 days): 74,043  (6.94%)
+
+  -- Cross-check: status flag vs day-level criterion --
+rumor_jfe              0      1      All
+has_rumor_status                        
+0                 825720  74043   899763
+1                 166450      0   166450
+All               992170  74043  1066213
+
+  -- Completion rate --
+    rumor=1 : 92.2%  (N=74,043)
+    rumor=0 : 80.9%  (N=992,170)
+--- checkpoint after rumor & dates block @ 13:34:55 ---
+
+  [01_deal_structure_date.csv] COVERAGE DIAGNOSTICS — 1,066,213 rows
+    Column                                          Non-Null     Pct      Missing     Pct
+    -------------------------------------------------------------------------------------
+    deal_num                                       1,066,213 100.00%            0   0.00%
+    deal_type                                      1,066,213 100.00%            0   0.00%
+    deal_status                                    1,066,213 100.00%            0   0.00%
+    deal_struct                                      307,677  28.86%      758,536  71.14%
+    deal_fin                                         154,222  14.46%      911,991  85.54%
+    deal_pay_method                                  308,591  28.94%      757,622  71.06%
+    deal_pay_method_all                              308,591  28.94%      757,622  71.06%
+    deal_pay_method_n                                308,591  28.94%      757,622  71.06%
+    deal_struct_all                                  307,677  28.86%      758,536  71.14%
+    deal_struct_n                                    307,677  28.86%      758,536  71.14%
+    deal_fin_all                                     154,222  14.46%      911,991  85.54%
+    deal_fin_n                                       154,222  14.46%      911,991  85.54%
+    deal_type_all                                  1,066,213 100.00%            0   0.00%
+    deal_type_n                                    1,066,213 100.00%            0   0.00%
+    announced_d                                      897,698  84.19%      168,515  15.81%
+    completed_d                                      653,142  61.26%      413,071  38.74%
+    withdrawn_d                                       19,617   1.84%    1,046,596  98.16%
+    assumed_comp_d                                   216,739  20.33%      849,474  79.67%
+    pay_has_cash                                   1,066,213 100.00%            0   0.00%
+    pay_has_shares                                 1,066,213 100.00%            0   0.00%
+    pay_has_debt                                   1,066,213 100.00%            0   0.00%
+    pay_has_other                                  1,066,213 100.00%            0   0.00%
+    pay_n_class                                    1,066,213 100.00%            0   0.00%
+    pay_pure_cash                                  1,066,213 100.00%            0   0.00%
+    pay_pure_shares                                1,066,213 100.00%            0   0.00%
+    pay_pure_debt                                  1,066,213 100.00%            0   0.00%
+    pay_pure_other                                 1,066,213 100.00%            0   0.00%
+    pay_mix                                        1,066,213 100.00%            0   0.00%
+    pay_unknown                                    1,066,213 100.00%            0   0.00%
+    pay_mix_cash_shares                            1,066,213 100.00%            0   0.00%
+    pay_mix_with_shares                            1,066,213 100.00%            0   0.00%
+    pay_mix_with_cash                              1,066,213 100.00%            0   0.00%
+    pay_mix_with_debt                              1,066,213 100.00%            0   0.00%
+    pay_class                                        308,591  28.94%      757,622  71.06%
+    rumor_jfe                                      1,066,213 100.00%            0   0.00%
+    has_rumor_status                               1,066,213 100.00%            0   0.00%
+    rumor_lead_days                                  897,698  84.19%      168,515  15.81%
+    completed_flag                                 1,066,213 100.00%            0   0.00%
+    DaysToCompletion                                 653,140  61.26%      413,073  38.74%
+    ln_days                                          155,583  14.59%      910,630  85.41%
+    rumour_d                                       1,066,213 100.00%            0   0.00%
+
+  [01_deal_structure_date.csv] DESCRIPTIVE STATS — numeric (26 columns)
+    column                                          min          median            mean             max             std
+    --------------------------------------------------------------------------------------------------------------
+    deal_num                                  30,857.00   1,909,134,341   1,441,176,890   2,008,992,867     795,913,475
+    deal_pay_method_n                              1.00            1.00            1.36            7.00            0.65
+    deal_struct_n                                  1.00            1.00            1.24            9.00            0.58
+    deal_fin_n                                     1.00            1.00            1.42            6.00            0.54
+    deal_type_n                                    1.00            1.00            1.00            1.00            0.00
+    pay_has_cash                                   0.00            0.00            0.22            1.00            0.41
+    pay_has_shares                                 0.00            0.00            0.07            1.00            0.26
+    pay_has_debt                                   0.00            0.00            0.04            1.00            0.19
+    pay_has_other                                  0.00            0.00            0.04            1.00            0.19
+    pay_n_class                                    0.00            0.00            0.37            4.00            0.66
+    pay_pure_cash                                  0.00            0.00            0.16            1.00            0.37
+    pay_pure_shares                                0.00            0.00            0.04            1.00            0.19
+    pay_pure_debt                                  0.00            0.00            0.01            1.00            0.12
+    pay_pure_other                                 0.00            0.00            0.01            1.00            0.10
+    pay_mix                                        0.00            0.00            0.07            1.00            0.25
+    pay_unknown                                    0.00            1.00            0.71            1.00            0.45
+    pay_mix_cash_shares                            0.00            0.00            0.03            1.00            0.17
+    pay_mix_with_shares                            0.00            0.00            0.04            1.00            0.18
+    pay_mix_with_cash                              0.00            0.00            0.06            1.00            0.24
+    pay_mix_with_debt                              0.00            0.00            0.02            1.00            0.15
+    rumor_jfe                                      0.00            0.00            0.07            1.00            0.25
+    has_rumor_status                               0.00            0.00            0.16            1.00            0.36
+    rumor_lead_days                             -223.00            0.00           13.75       43,464.00           93.84
+    completed_flag                                 0.00            1.00            0.82            1.00            0.39
+    DaysToCompletion                            -668.00            0.00           24.88        9,376.00           84.24
+    ln_days                                        0.00            4.17            4.06            9.15            1.19
+
+  Module 6: 1,066,213 rows written -> D:\MA\data\cleaned\01_deal_structure_date.csv
+--- checkpoint after write @ 13:35:20 ---
+
+##############################################################################
+# 01a run — 01a_clean_structure_date.py
+# started : 2026-10-21 13:56:04
+# cwd     : C:\Users\13601
+# python  : 3.13.9
+# pandas  : 2.3.3
+##############################################################################
+
+==============================================================================
+Module M2.3+M6 — Structure & dates export -> 01_deal_structure_date.csv (FIXED+DEDUP+CLIP)
+==============================================================================
+  [structure_date] deal_num ffill: NaN 0 -> 0 (filled 0)
+  [structure_date] loaded: 1,293,380 rows | 24 cols | unique deal_num: 1,066,213
+
+  after dropna(deal_num): 1,293,380 rows
+--- checkpoint after load @ 13:56:04 ---
+
+  -- deal_status distribution (normalized) --
+    completed                         789,757   61.06%
+    completed assumed                 273,260   21.13%
+    rumour - expired                  158,100   12.22%
+    withdrawn                          31,506    2.44%
+    rumour                             14,265    1.10%
+    announced                          10,981    0.85%
+    rumour - withdrawn                  6,007    0.46%
+    pending                             3,353    0.26%
+    pending - awaiting regulatory approval        2,146    0.17%
+    rumour - informal offer/non-binding        2,048    0.16%
+    pending - awaiting shareholder approval        1,348    0.10%
+    postponed                             322    0.02%
+    unconditional                         187    0.01%
+    rumour - analyst speculation          100    0.01%
+
+  -- Building Payment Method Variables --
+  [check] pay_mix_cash_shares=31,991 | pay_mix_with_shares=37,811
+  [check] OK — mix_with_shares consistent with cash+shares
+  Payment classification done. Deals with payment info: 308,591
+  Pure Cash: 170,879 | Pure Shares: 41,664 | Mix: 70,770
+
+CATEGORICAL AGG (struct, fin, type)
+  [deal_struct] 307,677 deals | multi 55,584
+  [deal_fin] 154,222 deals | multi 61,477
+  [deal_type] 1,066,213 deals | multi 0
+  after aggregation + dedup + pay merge: 1,066,213 rows
+--- checkpoint after aggregation @ 14:00:52 ---
+
+  -- Processing Dates (Parsing) --
+    [announced_d] parsed non-null 897,698 | out-of-range clipped 0
+    [completed_d] parsed non-null 653,142 | out-of-range clipped 0
+    [withdrawn_d] parsed non-null 19,617 | out-of-range clipped 0
+    [assumed_comp_d] parsed non-null 216,739 | out-of-range clipped 0
+    [rumour_d] parsed non-null 1,066,213 | out-of-range clipped 0
+
+  -- Rumor block --
+  [DIAG] rumour_d == announced_d : 821,714 / 897,698 (91.54%)
+  [!!] rumour_d looks like a PLACEHOLDER filled with announced_d.
+       Do NOT rely on the day-level criterion alone.
+  [FIX-4] lead clipped to [-30, 1825] : 114 rows
+  rumor_lead_days non-null: 897,584
+
+  -- Rumor lead distribution (cleaned) --
+    == 0    :    821,714
+    <  0    :          0
+    >= 3    :     73,931
+    >= 30   :     58,503
+    >= 90   :     36,465
+    >= 365  :      8,844
+    >= 730  :      2,028
+    >= 1825 :          0
+
+  >> rumor_jfe  (lead >= 3d)        : 73,931  (6.93%)
+  >> has_rumor_status                      : 166,450  (15.61%)
+  >> rumor_any  (either)                   : 240,381  (22.55%)
+
+  -- Cross-check: day-level vs status --
+rumor_jfe              0      1      All
+has_rumor_status                        
+0                 825832  73931   899763
+1                 166450      0   166450
+All               992282  73931  1066213
+
+  -- Completion --
+    completed_flag   (Completed*) : 871,171 (81.71%)
+    completed_strict (Completed)  : 653,144 (61.26%)
+
+  -- DaysToCompletion & ln_days --
+  [FIX-4] DaysToCompletion clipped to [0, 3650] : 35 rows
+  [FIX-5] ln_days = log1p(days), non-null: 653,105 (61.25%)
+--- checkpoint after dates @ 14:01:01 ---
+
+==============================================================================
+  SAMPLE MOMENTS  (compare with paper: p_A=0.2563, p_D=0.6568)
+==============================================================================
+    N                        : 1,066,213
+    p(rumor_jfe           ): 0.0693
+    p(has_rumor_status    ): 0.1561
+    p(rumor_any           ): 0.2255
+    p(completed_flag      ): 0.8171
+    p(completed_strict    ): 0.6126
+    announced_d coverage     : 84.19%
+
+
+==============================================================================
+  FINAL DEDUPLICATION CHECK (ONE ROW PER DEAL)
+==============================================================================
+
+  [DEDUP-CHECK] entity cols: 0 -> []
+  [DEDUP-CHECK] rows=1,066,213 | unique deal_num=1,066,213 | 多行=0
+  [DEDUP] 1,066,213 -> 1,066,213 rows
+  [ASSERT] PASSED: exactly one row per deal_num.
+
+  [01_deal_structure_date.csv] COVERAGE DIAGNOSTICS — 1,066,213 rows
+    Column                                          Non-Null     Pct      Missing     Pct
+    -------------------------------------------------------------------------------------
+    src_file                                       1,066,213 100.00%            0   0.00%
+    unnamed_0                                      1,066,213 100.00%            0   0.00%
+    deal_num                                       1,066,213 100.00%            0   0.00%
+    deal_type                                      1,066,213 100.00%            0   0.00%
+    deal_struct                                      307,677  28.86%      758,536  71.14%
+    deal_fin                                         154,222  14.46%      911,991  85.54%
+    deal_pay_method                                  308,591  28.94%      757,622  71.06%
+    deal_pay_method_val_usd                          222,742  20.89%      843,471  79.11%
+    deal_status                                    1,066,213 100.00%            0   0.00%
+    expected_comp_d                                   63,477   5.95%    1,002,736  94.05%
+    postponed_d                                          269   0.03%    1,065,944  99.97%
+    last_deal_status_d                             1,066,213 100.00%            0   0.00%
+    last_deal_val_up_d                               155,911  14.62%      910,302  85.38%
+    last_deal_status_up_d                            213,125  19.99%      853,088  80.01%
+    last_pct_stake_up_d                               79,929   7.50%      986,284  92.50%
+    last_acq_tar_ven_up_d                            170,503  15.99%      895,710  84.01%
+    last_advisor_up_d                                156,935  14.72%      909,278  85.28%
+    last_comment_up_d                                282,889  26.53%      783,324  73.47%
+    last_up                                          438,007  41.08%      628,206  58.92%
+    deal_status_clean                              1,066,213 100.00%            0   0.00%
+    deal_struct_all                                  307,677  28.86%      758,536  71.14%
+    deal_struct_n                                    307,677  28.86%      758,536  71.14%
+    deal_fin_all                                     154,222  14.46%      911,991  85.54%
+    deal_fin_n                                       154,222  14.46%      911,991  85.54%
+    deal_type_all                                  1,066,213 100.00%            0   0.00%
+    deal_type_n                                    1,066,213 100.00%            0   0.00%
+    deal_pay_method_all                              308,591  28.94%      757,622  71.06%
+    deal_pay_method_n                                308,591  28.94%      757,622  71.06%
+    announced_d                                      897,698  84.19%      168,515  15.81%
+    completed_d                                      653,142  61.26%      413,071  38.74%
+    withdrawn_d                                       19,617   1.84%    1,046,596  98.16%
+    assumed_comp_d                                   216,739  20.33%      849,474  79.67%
+    rumour_d                                       1,066,213 100.00%            0   0.00%
+    pay_has_cash                                   1,066,213 100.00%            0   0.00%
+    pay_has_shares                                 1,066,213 100.00%            0   0.00%
+    pay_has_debt                                   1,066,213 100.00%            0   0.00%
+    pay_has_other                                  1,066,213 100.00%            0   0.00%
+    pay_n_class                                    1,066,213 100.00%            0   0.00%
+    pay_pure_cash                                  1,066,213 100.00%            0   0.00%
+    pay_pure_shares                                1,066,213 100.00%            0   0.00%
+    pay_pure_debt                                  1,066,213 100.00%            0   0.00%
+    pay_pure_other                                 1,066,213 100.00%            0   0.00%
+    pay_mix                                        1,066,213 100.00%            0   0.00%
+    pay_mix_cash_shares                            1,066,213 100.00%            0   0.00%
+    pay_mix_with_shares                            1,066,213 100.00%            0   0.00%
+    pay_mix_with_cash                              1,066,213 100.00%            0   0.00%
+    pay_mix_with_debt                              1,066,213 100.00%            0   0.00%
+    pay_class                                        308,591  28.94%      757,622  71.06%
+    pay_unknown                                    1,066,213 100.00%            0   0.00%
+    rumour_eq_announced                            1,066,213 100.00%            0   0.00%
+    rumor_lead_days                                  897,584  84.18%      168,629  15.82%
+    rumor_jfe                                      1,066,213 100.00%            0   0.00%
+    has_rumor_status                               1,066,213 100.00%            0   0.00%
+    rumor_any                                      1,066,213 100.00%            0   0.00%
+    completed_flag                                 1,066,213 100.00%            0   0.00%
+    completed_strict                               1,066,213 100.00%            0   0.00%
+    DaysToCompletion                                 653,105  61.25%      413,108  38.75%
+    ln_days                                          653,105  61.25%      413,108  38.75%
+
+  [01_deal_structure_date.csv] DESCRIPTIVE STATS — numeric (30 columns)
+    column                                          min          median            mean             max             std
+    --------------------------------------------------------------------------------------------------------------
+    unnamed_0                                      1.00       21,325.00       21,518.35       43,478.00       12,543.19
+    deal_num                                  30,857.00   1,909,134,341   1,441,176,890   2,008,992,867     795,913,475
+    deal_struct_n                                  1.00            1.00            1.24            9.00            0.58
+    deal_fin_n                                     1.00            1.00            1.42            6.00            0.54
+    deal_type_n                                    1.00            1.00            1.00            1.00            0.00
+    deal_pay_method_n                              1.00            1.00            1.36            7.00            0.65
+    pay_has_cash                                   0.00            0.00            0.22            1.00            0.41
+    pay_has_shares                                 0.00            0.00            0.07            1.00            0.26
+    pay_has_debt                                   0.00            0.00            0.01            1.00            0.10
+    pay_has_other                                  0.00            0.00            0.06            1.00            0.25
+    pay_n_class                                    0.00            0.00            0.37            4.00            0.65
+    pay_pure_cash                                  0.00            0.00            0.16            1.00            0.37
+    pay_pure_shares                                0.00            0.00            0.04            1.00            0.19
+    pay_pure_debt                                  0.00            0.00            0.00            1.00            0.07
+    pay_pure_other                                 0.00            0.00            0.02            1.00            0.14
+    pay_mix                                        0.00            0.00            0.07            1.00            0.25
+    pay_mix_cash_shares                            0.00            0.00            0.03            1.00            0.17
+    pay_mix_with_shares                            0.00            0.00            0.04            1.00            0.18
+    pay_mix_with_cash                              0.00            0.00            0.06            1.00            0.24
+    pay_mix_with_debt                              0.00            0.00            0.01            1.00            0.07
+    pay_unknown                                    0.00            1.00            0.71            1.00            0.45
+    rumour_eq_announced                            0.00            1.00            0.77            1.00            0.42
+    rumor_lead_days                                0.00            0.00           13.37        1,819.00           74.80
+    rumor_jfe                                      0.00            0.00            0.07            1.00            0.25
+    has_rumor_status                               0.00            0.00            0.16            1.00            0.36
+    rumor_any                                      0.00            0.00            0.23            1.00            0.42
+    completed_flag                                 0.00            1.00            0.82            1.00            0.39
+    completed_strict                               0.00            1.00            0.61            1.00            0.49
+    DaysToCompletion                               0.00            0.00           24.76        3,287.00           80.71
+    ln_days                                        0.00            0.00            0.98            8.10            1.83
+
+  Module 6: 1,066,213 rows written -> D:\MA\data\cleaned\01_deal_structure_date.csv

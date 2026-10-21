@@ -1,0 +1,89 @@
+=== 01c COMMENTS FEATURES DIAGNOSTICS ===
+generated : 2026-10-20 09:06:10
+src files : 19
+LM match  : token
+collapse  : True (True = 输出 deal 级)
+
+--- per-file ---
+  MA_comment_10_cleaned.csv                in=  84,949 out=  58,814 bad_id=26,126 short=     18 uniq=  58,814 48s
+  MA_comment_11_cleaned.csv                in=  86,546 out=  86,539 bad_id=     0 short=     14 uniq=  58,816 71s
+  MA_comment_12_cleaned.csv                in=  79,794 out=  79,791 bad_id=     0 short=      6 uniq=  58,821 66s
+  MA_comment_13_cleaned.csv                in=  84,738 out=  84,736 bad_id=     0 short=      4 uniq=  58,821 63s
+  MA_comment_14_cleaned.csv                in=  89,880 out=  89,877 bad_id=     0 short=      6 uniq=  58,820 67s
+  MA_comment_15_cleaned.csv                in=  95,499 out=  95,497 bad_id=     0 short=      4 uniq=  58,821 74s
+  MA_comment_16_cleaned.csv                in=  91,624 out=  91,621 bad_id=     0 short=      6 uniq=  58,821 71s
+  MA_comment_17_cleaned.csv                in= 101,965 out= 101,959 bad_id=     0 short=     12 uniq=  58,818 70s
+  MA_comment_18_cleaned.csv                in= 110,037 out= 109,938 bad_id=     0 short=    198 uniq=  58,773 74s
+  MA_comment_19_cleaned.csv                in=  14,679 out=  14,638 bad_id=     0 short=     82 uniq=   7,893 12s
+  MA_comment_1_cleaned.csv                 in= 137,095 out= 137,070 bad_id=     0 short=     50 uniq=  58,809 412s
+  MA_comment_2_cleaned.csv                 in= 101,785 out= 101,763 bad_id=     0 short=     44 uniq=  58,810 187s
+  MA_comment_3_cleaned.csv                 in=  89,455 out=  89,446 bad_id=     0 short=     18 uniq=  58,814 140s
+  MA_comment_4_cleaned.csv                 in=  83,039 out=  83,027 bad_id=     0 short=     24 uniq=  58,813 115s
+  MA_comment_5_cleaned.csv                 in=  79,399 out=  79,395 bad_id=     0 short=      8 uniq=  58,820 109s
+  MA_comment_6_cleaned.csv                 in=  75,947 out=  75,939 bad_id=     0 short=     16 uniq=  58,817 95s
+  MA_comment_7_cleaned.csv                 in=  66,953 out=  66,856 bad_id=     0 short=    194 uniq=  58,726 65s
+  MA_comment_8_cleaned.csv                 in=  59,585 out=  59,584 bad_id=     0 short=      2 uniq=  58,822 47s
+  MA_comment_9_cleaned.csv                 in=  73,433 out=  73,433 bad_id=     0 short=      0 uniq=  58,823 58s
+
+--- totals (editorial level) ---
+Total rows processed : 1,579,923
+Unique deal_num      : 1,065,301
+Duplicate rows       : 513,451
+Unit of observation  : ONE ROW PER EDITORIAL
+
+comment_wordcount (editorial): p25=37 p50=55 p75=90 mean=86.4
+
+--- LM presence rates (editorial 级均值) ---
+  has_lm_pos               11.83%
+  has_lm_neg               68.64%
+  has_lm_uncertain         20.90%
+  has_lm_litigious         13.63%
+  has_lm_strongmodal       33.72%
+  has_lm_weakmodal         11.23%
+  has_lm_constrain         4.53%
+
+--- LM mean counts (editorial 级均值) ---
+  lm_pos_count             0.1800
+  lm_neg_count             1.2402
+  lm_uncertain_count       0.4040
+  lm_litigious_count       0.2344
+  lm_strongmodal_count     0.7191
+  lm_weakmodal_count       0.1893
+  lm_constrain_count       0.0623
+
+--- deal 级汇总（聚合后重算）---
+Deals               : 1,065,301
+  comment_n                mean=1.483  p50=1.0  非零占比=100.0%
+  comment_wordcount        mean=128.171  p50=68.0  非零占比=100.0%
+  lm_neg_count             mean=1.839  p50=1.0  非零占比=67.5%
+  lm_uncertain_count       mean=0.599  p50=0.0  非零占比=17.9%
+  lm_pos_count             mean=0.267  p50=0.0  非零占比=10.4%
+
+--- deal 级 LM 密度（重算：count/wordcount）---
+  lm_pos_density           0.00181
+  lm_neg_density           0.01738
+  lm_uncertain_density     0.00323
+  lm_litigious_density     0.00152
+  lm_strongmodal_density   0.00660
+  lm_weakmodal_density     0.00179
+  lm_constrain_density     0.00039
+
+--- other features (editorial 级均值) ---
+  avg_premium_pct                  1.4244
+  comment_char_length              573.8178
+  comment_wordcount                86.4221
+  has_deal_complete                0.1903
+  has_debt_assumption              0.0168
+  has_goshop                       0.0002
+  has_phase2_investigation         0.0004
+  has_reg_remedy                   0.0063
+  has_rumour                       0.2049
+  has_target_reject                0.0053
+  has_unconditional_offer          0.0053
+  max_premium_pct                  1.7288
+  num_unique_reg                   0.0239
+  price_event_num                  1.0070
+  rival_bidder_num                 0.0237
+  total_timeline_days              7688.0871
+
+elapsed: 2278s

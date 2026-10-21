@@ -1,0 +1,105 @@
+
+##############################################################################
+# 01b run — 01b_clean_info_source.py
+# started : 2026-10-16 21:43:21
+# cwd     : D:\MA\data
+# pandas  : 2.3.3
+##############################################################################
+
+==============================================================================
+Module M2.6+M8 — Info-source export -> 01b_deal_info_source_count.csv
+==============================================================================
+  [info_source] loaded: 1,580,276 rows | 3 cols | unique deal_num: 1,065,554
+
+  [cols] category column = 'source_category'
+  [cols] document column = 'source_document'
+
+==============================================================================
+  [FIX-2] DUPLICATE STRUCTURE DIAGNOSTIC
+==============================================================================
+    rows (raw)                       : 1,580,276
+    rows after EXACT dedup           : 1,578,760
+    exact duplicate rows removed     : 1,516
+    unique deal_num                  : 1,065,554
+    deals with >1 DISTINCT record    : 373,767
+    -> 多源为主（正常）
+
+  [FIX-5] source_category 分布（提取主类别后，top-30）
+    Electronic Publication                                    380,555   24.10%
+    Company Press Release                                     300,696   19.05%
+    Website                                                   243,448   15.42%
+    Stock Exchange                                            242,914   15.39%
+    Miscellaneous                                             196,153   12.42%
+    nan                                                       123,645    7.83%
+    Advisor Submission                                         88,536    5.61%
+    Analyst Speculation                                         1,629    0.10%
+    EDGAR Online, a division of R.R. Donnelley                  1,184    0.07%
+
+  [FIX-5] 映射后各桶计数
+    num_Stock_Exchange                  242,914   15.39%
+    num_Website                         243,448   15.42%
+    num_Company_Press_Release           300,696   19.05%
+    num_Electronic_Publication          380,555   24.10%
+    num_Advisor_Submission               88,536    5.61%
+    num_Miscellaneous                   196,153   12.42%
+    num_source_other                      2,813    0.18%
+
+    [warn] 2,813 条落入 num_source_other，其类别：
+      Analyst Speculation                                       1,629
+      EDGAR Online, a division of R.R. Donnelley                1,184
+--- checkpoint after aggregation @ 21:43:21 ---
+
+==============================================================================
+  [FIX-9] COVERAGE vs MAIN TABLE
+==============================================================================
+    deals in info_source export : 941,909
+    main table (structure_date): 1,066,213
+    coverage                    : 88.34%
+    NOT covered                 : 124,304 (11.66%)
+
+    [FIX-3] 02 左连接后请务必：
+      has_info_source = has_info_source.fillna(0)
+      -> 0 表示该 deal 不在信息源导出中（83.5% 的交易）
+      num_* 的 0 表示无此类来源，与 has_info_source=0 含义不同
+
+  [01b_deal_info_source_count.csv] COVERAGE — 941,909 rows
+    Column                                     Non-Null     Pct      Missing     Pct
+    --------------------------------------------------------------------------------
+    deal_num                                    941,909 100.00%            0   0.00%
+    num_Stock_Exchange                          941,909 100.00%            0   0.00%
+    num_Website                                 941,909 100.00%            0   0.00%
+    num_Company_Press_Release                   941,909 100.00%            0   0.00%
+    num_Electronic_Publication                  941,909 100.00%            0   0.00%
+    num_Advisor_Submission                      941,909 100.00%            0   0.00%
+    num_Miscellaneous                           941,909 100.00%            0   0.00%
+    num_source_other                            941,909 100.00%            0   0.00%
+    num_source_total                            941,909 100.00%            0   0.00%
+    num_distinct_categories                     941,909 100.00%            0   0.00%
+    has_advisor_submission                      941,909 100.00%            0   0.00%
+    has_info_source                             941,909 100.00%            0   0.00%
+
+  [01b_deal_info_source_count.csv] DESCRIPTIVE STATS — numeric (9)
+    column                                min     median       mean        max          sum
+    ------------------------------------------------------------------------------------
+    num_Stock_Exchange                      0          0       0.26          2      242,914
+    num_Website                             0          0       0.26          1      243,448
+    num_Company_Press_Release               0          0       0.32          1      300,696
+    num_Electronic_Publication              0          0       0.40          1      380,555
+    num_Advisor_Submission                  0          0       0.09          1       88,536
+    num_Miscellaneous                       0          0       0.21          1      196,153
+    num_source_other                        0          0       0.00          2        2,813
+    num_source_total                        1          1       1.54          7    1,455,115
+    num_distinct_categories                 1          1       1.54          7    1,455,110
+
+==============================================================================
+  [FIX-10] 论文稳健性：顾问投稿记录
+==============================================================================
+    has_advisor_submission = 1 : 88,536 (9.40% of covered deals)
+    has_advisor_submission = 0 : 853,373 (90.60%)
+
+    注意：这里的 0 是在【已覆盖子样本】内的 0。
+    若要复现论文'限定无顾问投稿记录'的稳健性检验，
+    分母应为 has_info_source==1 的子样本，而非全样本。
+
+  Module 8: 941,909 deals written -> D:\MA\data\cleaned\01b_deal_info_source_count.csv
+  columns (12): ['deal_num', 'num_Stock_Exchange', 'num_Website', 'num_Company_Press_Release', 'num_Electronic_Publication', 'num_Advisor_Submission', 'num_Miscellaneous', 'num_source_other', 'num_source_total', 'num_distinct_categories', 'has_advisor_submission', 'has_info_source']

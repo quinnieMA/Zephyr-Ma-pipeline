@@ -1,0 +1,203 @@
+
+##############################################################################
+# 01b run — 01b_clean_vendor_type.py
+# started : 2026-10-16 21:25:22
+##############################################################################
+
+==============================================================================
+Module M9 — Vendor identity (lexicon -> NER -> heuristic) -> 01b_deal_vendor_type.csv [FIXED]
+==============================================================================
+  x no vendor-name column among ['ven_name', 'vendor_name', 'vendorname', 'ven_name_clean', 'vendor']; abort.
+
+==============================================================================
+Module M9 — Vendor identity (self-built vendor names + lexicon -> NER -> heuristic) [FIXED v2]
+==============================================================================
+
+==============================================================================
+Module STEP 1 — [FIX-A] Build vendor-name table from RAW overview
+==============================================================================
+  [keys] overview: found=['deal_num', 'tar_name', 'tar_bvd_id_num', 'tar_orbis_id_num', 'acq_name', 'acq_bvd_id_num', 'acq_orbis_id_num', 'ven_name', 'ven_bvd_id_num']  missing=[]
+  [expected] overview: all 3 present
+  [overview] loaded: 1,459,280 rows | 35 cols | unique deal_num: 1,058,777
+  rows with non-null ven_name: 804,537 (of 1,459,280)
+  groupby.first(): 804,537 rows -> 530,985 deals
+  [WRITE] D:\MA\data\cleaned\01a_deal_vendor_name.csv
+    rows=530,985 | cols=['deal_num', 'ven_name', 'ven_bvd_id_num']
+  [FIX-I] coverage vs main: 530,985 / 1,066,213 = 49.80%
+
+  Unique vendor names: 290,772
+
+==============================================================================
+Module STEP 2 — [FIX-B] Lexicon stage
+==============================================================================
+  Generated default lexicon: D:\MA\data\vendor_lexicon.csv (127 rules)
+    -> hand-editable: priority(small=first) / category / pattern
+  lexicon resolved: 144,766 / 290,772 (49.79%)
+  remaining       : 146,006
+
+==============================================================================
+Module STEP 3 — [FIX-B][FIX-E] NER stage (unresolved only)
+==============================================================================
+
+  [NER] unresolved : 146,006
+  [NER] cached     : 0
+  [NER] to process : 146,006
+  CoreNLP started: D:\MA\NLP\stanford-corenlp-4.5.7
+    NER 5,000/146,006 (37.2/s, eta 63.2 min)
+  NER cache saved (5,000)
+    NER 10,000/146,006 (36.7/s, eta 61.7 min)
+  NER cache saved (10,000)
+    NER 15,000/146,006 (31.3/s, eta 69.8 min)
+  NER cache saved (15,000)
+    NER 20,000/146,006 (34.5/s, eta 60.9 min)
+  NER cache saved (20,000)
+    NER 25,000/146,006 (38.1/s, eta 52.9 min)
+  NER cache saved (25,000)
+    NER 30,000/146,006 (40.9/s, eta 47.3 min)
+  NER cache saved (30,000)
+    NER 35,000/146,006 (42.8/s, eta 43.2 min)
+  NER cache saved (35,000)
+    NER 40,000/146,006 (44.2/s, eta 39.9 min)
+  NER cache saved (40,000)
+    NER 45,000/146,006 (44.8/s, eta 37.6 min)
+  NER cache saved (45,000)
+    NER 50,000/146,006 (44.4/s, eta 36.0 min)
+  NER cache saved (50,000)
+    NER 55,000/146,006 (44.5/s, eta 34.1 min)
+  NER cache saved (55,000)
+    NER 60,000/146,006 (45.0/s, eta 31.9 min)
+  NER cache saved (60,000)
+    NER 65,000/146,006 (45.9/s, eta 29.4 min)
+  NER cache saved (65,000)
+    NER 70,000/146,006 (46.0/s, eta 27.5 min)
+  NER cache saved (70,000)
+    NER 75,000/146,006 (45.7/s, eta 25.9 min)
+  NER cache saved (75,000)
+    NER 80,000/146,006 (46.4/s, eta 23.7 min)
+  NER cache saved (80,000)
+    NER 85,000/146,006 (46.5/s, eta 21.9 min)
+  NER cache saved (85,000)
+    NER 90,000/146,006 (46.7/s, eta 20.0 min)
+  NER cache saved (90,000)
+    NER 95,000/146,006 (47.3/s, eta 18.0 min)
+  NER cache saved (95,000)
+    NER 100,000/146,006 (47.6/s, eta 16.1 min)
+  NER cache saved (100,000)
+    NER 105,000/146,006 (48.2/s, eta 14.2 min)
+  NER cache saved (105,000)
+    NER 110,000/146,006 (48.6/s, eta 12.3 min)
+  NER cache saved (110,000)
+    NER 115,000/146,006 (48.7/s, eta 10.6 min)
+  NER cache saved (115,000)
+    NER 120,000/146,006 (49.1/s, eta 8.8 min)
+  NER cache saved (120,000)
+    NER 125,000/146,006 (48.5/s, eta 7.2 min)
+  NER cache saved (125,000)
+    NER 130,000/146,006 (48.2/s, eta 5.5 min)
+  NER cache saved (130,000)
+    NER 135,000/146,006 (47.7/s, eta 3.8 min)
+  NER cache saved (135,000)
+    NER 140,000/146,006 (47.7/s, eta 2.1 min)
+  NER cache saved (140,000)
+    NER 145,000/146,006 (47.2/s, eta 0.4 min)
+  NER cache saved (145,000)
+  CoreNLP closed
+  NER cache saved (146,006)
+  NER resolved: 8,459
+
+==============================================================================
+Module STEP 4 — [FIX-F] Heuristic fallback
+==============================================================================
+  heuristic resolved: 25,643
+
+==============================================================================
+Module STEP 5 — Assemble output
+==============================================================================
+
+  Vendor-type distribution
+    corporate                       264,879 ( 49.9%)
+    UNMAPPED                        139,088 ( 26.2%)
+    shareholders_undisclosed         40,828 (  7.7%)
+    insolvency                       22,395 (  4.2%)
+    government                       17,039 (  3.2%)
+    financial_inst                   13,397 (  2.5%)
+    management                       12,547 (  2.4%)
+    family_person                    10,332 (  1.9%)
+    pe_vc                             7,353 (  1.4%)
+    undisclosed                       3,127 (  0.6%)
+
+  Classification source [FIX-G]
+    lexicon                         330,422 ( 62.2%)
+    unmapped                        139,088 ( 26.2%)
+    heuristic                        51,096 (  9.6%)
+    ner                              10,379 (  2.0%)
+
+  Saved -> D:\MA\data\cleaned\01b_deal_vendor_type.csv
+
+  UNMAPPED: 139,088 (26.19%)
+  top-30 unmapped:
+    FAMILY                                                    823
+    KOSOVO TRUST AGENCY                                       220
+    INVESTOR                                                  180
+    JP MORGAN                                                 121
+    IMG MULTISERVICE SP ZOO                                   118
+    CREDITORS                                                 109
+    DIRECTOR                                                   98
+    TAXOUT CORPORATE SERVICES SP ZOO SP K                      93
+    AGENTIA PROPRIETATII PUBLICE A REPUBLICII MOLDOVA          83
+    MORGAN STANLEY                                             78
+    FORTUM OYJ                                                 78
+    BASF SE                                                    76
+    UPM-KYMMENE OYJ                                            73
+    NORSK HYDRO ASA                                            73
+    DIRECTORS                                                  66
+    GOSUDARSTVENNAYA KORPORATSIYA PO SODEISTVIYU RAZRA         66
+    SCHIBSTED ASA                                              65
+    YOUR TAX SPOLKI SP ZOO                                     62
+    DRAPER FISHER JURVETSON                                    62
+    LAGARDERE SCA                                              60
+    STORA ENSO OYJ                                             60
+    TELENOR ASA                                                57
+    TMF POLAND SP ZOO                                          57
+    ALLIANZ SE                                                 57
+    NOKIA OYJ                                                  56
+    ASSOCIATES                                                 53
+    QAZMUNAIGAZ ULTTYQ KOMPANIASY AQ                           48
+    ELISA OYJ                                                  48
+    FOND NARODNEHO MAJETKU SLOVENSKEJ REPUBLIKY                47
+    LA CAISSE DE DEPOT ET PLACEMENT DU QUEBEC                  46
+
+  [FIX-H] 含政府关键词仍 UNMAPPED: 0
+
+==============================================================================
+Module G-5 — Vendor type x information environment
+==============================================================================
+  merged 01b_deal_info_source_count.csv
+  merged 01_deal_value.csv
+
+  share_* = 组内比例；median_deal_value = 中位数
+
+  vendor_type                        N       share_advsub     share_exchange        share_press  median_deal_value
+  --------------------------------------------------------------------------------------------
+  corporate                    264,879              0.109              0.299              0.287          14900.000
+  UNMAPPED                     139,088              0.070              0.252              0.237           4693.983
+  shareholders_undisclosed      40,828              0.179              0.381              0.360          22686.833
+  insolvency                    22,395              0.060              0.049              0.188           1534.858
+  government                    17,039              0.024              0.034              0.249           1437.771
+  financial_inst                13,397              0.143              0.186              0.315          61628.943
+  management                    12,547              0.188              0.299              0.343          37537.000
+  family_person                 10,332              0.057              0.242              0.226           3062.095
+  pe_vc                          7,353              0.242              0.165              0.439          84043.391
+  undisclosed                    3,127              0.048              0.153              0.202           5529.760
+
+  Saved -> D:\MA\data\cleaned\01b_deal_vendor_type_profile.csv
+
+  [01b_deal_vendor_type.csv] coverage — 530,985 rows
+    Column                                          Non-Null     Pct      Missing
+    ------------------------------------------------------------------------------
+    deal_num                                         530,985 100.00%            0
+    ven_name                                         530,985 100.00%            0
+    ven_bvd_id_num                                   352,267  66.34%      178,718
+    vendor_type                                      530,985 100.00%            0
+    vendor_type_source                               530,985 100.00%            0
+    matched_pattern                                  530,985 100.00%            0

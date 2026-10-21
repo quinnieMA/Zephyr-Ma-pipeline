@@ -1,0 +1,79 @@
+
+##############################################################################
+# 01a run — 01a_clean_multiple.py
+# started : 2026-10-16 21:19:59
+# cwd     : D:\MA\data
+##############################################################################
+
+==============================================================================
+Module M5 — Valuation multiples export -> 01_deal_multiple.csv (FIXED)
+==============================================================================
+  [multiple] loaded: 1,145,367 rows | 14 cols | unique deal_num: 1,066,572
+  after dropna(deal_num): 1,145,367 rows
+  [map:multiple] not found (NaN): ['pre_pe_mul_ly', 'pre_book_mul_ly']
+  [FIX-3] keeping 11 multiple column(s): ['pre_rev_mul_ly', 'pre_ebitda_mul_ly', 'pre_ebit_mul_ly', 'pre_pbt_mul_ly', 'pre_pat_mul_ly', 'pre_np_mul_ly', 'pre_ta_mul_ly', 'pre_na_mul_ly', 'pre_cl_mul_ly', 'pre_eq_mul_ly', 'pre_cap_mul_ly']
+  [FIX-6] pre_rev_mul_ly <= 0 -> NaN: 1,110
+    [diag] pre_pbt_mul_ly: 1 负值（分母可为负，保留）
+    [diag] pre_ta_mul_ly: 1 负值（分母可为负，保留）
+    [diag] pre_eq_mul_ly: 1 负值（分母可为负，保留）
+--- checkpoint before aggregation @ 21:19:59 ---
+
+  [AGG:multiple] rows 1,145,367 -> 1,066,572 (unique deal_num)
+
+  [GAIN] multiple — keep='first' vs groupby.first() 非空数
+    column                         keep-first   aggregated         gain
+    --------------------------------------------------------------------
+    pre_rev_mul_ly                    117,469      117,469           +0
+    pre_ebitda_mul_ly                  46,868       46,868           +0
+    pre_ebit_mul_ly                    59,597       59,597           +0
+    pre_pbt_mul_ly                     72,172       72,172           +0
+    pre_pat_mul_ly                     61,825       61,825           +0
+    pre_np_mul_ly                      12,167       12,167           +0
+    pre_ta_mul_ly                     132,434      132,434           +0
+    pre_na_mul_ly                      23,143       23,143           +0
+    pre_cl_mul_ly                     102,523      102,523           +0
+    pre_eq_mul_ly                     109,741      109,741           +0
+    pre_cap_mul_ly                     33,403       33,403           +0
+
+  [01_deal_multiple.csv] COVERAGE — 1,066,572 rows
+    Column                                     Non-Null     Pct      Missing     Pct
+    --------------------------------------------------------------------------------
+    deal_num                                  1,066,572 100.00%            0   0.00%
+    pre_rev_mul_ly                              117,469  11.01%      949,103  88.99%
+    pre_ebitda_mul_ly                            46,868   4.39%    1,019,704  95.61%
+    pre_ebit_mul_ly                              59,597   5.59%    1,006,975  94.41%
+    pre_pbt_mul_ly                               72,172   6.77%      994,400  93.23%
+    pre_pat_mul_ly                               61,825   5.80%    1,004,747  94.20%
+    pre_np_mul_ly                                12,167   1.14%    1,054,405  98.86%
+    pre_ta_mul_ly                               132,434  12.42%      934,138  87.58%
+    pre_na_mul_ly                                23,143   2.17%    1,043,429  97.83%
+    pre_cl_mul_ly                               102,523   9.61%      964,049  90.39%
+    pre_eq_mul_ly                               109,741  10.29%      956,831  89.71%
+    pre_cap_mul_ly                               33,403   3.13%    1,033,169  96.87%
+
+  [01_deal_multiple.csv] DESCRIPTIVE STATS + QUANTILES
+    column                           min          p1          p5      median         p95         p99         max
+    ------------------------------------------------------------------------------------------------------------
+    deal_num                   30,857.00   48,251.13  130,318.55 1,909,134,972 2,008,311,926 2,008,824,779 2,009,001,649
+    pre_rev_mul_ly                  0.01        0.02        0.10        1.73      150.04    4,569.85 15,939,939,000
+    pre_ebitda_mul_ly               0.00        0.10        1.21       10.44      201.71    1,721.20 187,397,517
+    pre_ebit_mul_ly                 0.00        0.08        1.17       13.73      328.25    3,570.20 370,269,863
+    pre_pbt_mul_ly                 -3.88        0.08        1.26       15.19      379.73    4,215.45 15,939,939,000
+    pre_pat_mul_ly                  0.00        0.08        1.45       18.95      472.80    4,607.59 15,939,939,000
+    pre_np_mul_ly                   0.00        0.28        2.77       21.56      399.11    1,757.04  425,882.24
+    pre_ta_mul_ly                  -0.05        0.00        0.07        1.02       18.45    1,028.76 7,944,614,055
+    pre_na_mul_ly                   0.00        0.04        0.28        1.89       21.73      120.06  445,441.79
+    pre_cl_mul_ly                   0.00        0.01        0.15        4.31      216.91    5,808.65 2,033,262,418
+    pre_eq_mul_ly                  -0.25        0.02        0.26        2.17       51.32    2,770.67 15,797,465,968
+    pre_cap_mul_ly                  0.00        0.01        0.11        1.15        5.39       33.23  112,107.53
+
+==============================================================================
+  CORE MOMENT — p_B (估值可观测率)
+==============================================================================
+    p_B (pre_rev_mul_ly 覆盖) = 0.1101  (n=117,469 / 1,066,572)
+    论文 p_B                   = 0.2081
+    -> 选择比论文更严重，可观测性方程信息充足
+
+  [vs main] unique deal_num: 1,066,572 (structure_date: 1,066,213, diff=+359)
+
+  Module 5: 1,066,572 rows written -> D:\MA\data\cleaned\01_deal_multiple.csv

@@ -1,0 +1,412 @@
+
+==============================================================================
+Module M2.5+M4 — Industry export -> 01_deal_sic_industry.csv
+==============================================================================
+  NOTE: this file is COMPLEMENTARY to 01a_clean_overview.py — run BOTH.
+        overview  -> 01_deal_overview.csv      (country, regulatory, vendor)
+        industry  -> 01_deal_sic_industry.csv  (SIC / NAICS, descriptions)
+        They must be merged on (deal_num, tar_key), NOT on deal_num alone.
+  [keys] industry: found=['deal_num', 'tar_name', 'tar_bvd_id_num', 'tar_orbis_id_num', 'acq_name', 'acq_bvd_id_num', 'acq_orbis_id_num', 'ven_name', 'ven_bvd_id_num']  missing=[]
+  [expected] industry: all 14 expected columns present
+  [industry] loaded: 1,223,623 rows | 20 cols | unique deal_num: 1,066,484
+
+  [RAW industry (after load)] coverage — 1,223,623 rows
+    deal_num                                      non-null 1,223,623 (100.00%)  missing         0 (  0.00%)
+    tar_name                                      non-null 1,097,248 ( 89.67%)  missing   126,375 ( 10.33%)
+    tar_bvd_id_num                                non-null   787,773 ( 64.38%)  missing   435,850 ( 35.62%)
+    tar_orbis_id_num                              non-null   751,784 ( 61.44%)  missing   471,839 ( 38.56%)
+    tar_overview                                  non-null   349,206 ( 28.54%)  missing   874,417 ( 71.46%)
+    acq_overview                                  non-null   649,735 ( 53.10%)  missing   573,888 ( 46.90%)
+    tar_primary_sic_code                          non-null 1,032,871 ( 84.41%)  missing   190,752 ( 15.59%)
+    tar_primary_naics_code                        non-null 1,032,871 ( 84.41%)  missing   190,752 ( 15.59%)
+    acq_name                                      non-null 1,031,508 ( 84.30%)  missing   192,115 ( 15.70%)
+    acq_bvd_id_num                                non-null   894,114 ( 73.07%)  missing   329,509 ( 26.93%)
+    acq_orbis_id_num                              non-null   843,555 ( 68.94%)  missing   380,068 ( 31.06%)
+    acq_primary_sic_code                          non-null 1,022,947 ( 83.60%)  missing   200,676 ( 16.40%)
+    ven_name                                      non-null    28,574 (  2.34%)  missing 1,195,049 ( 97.66%)
+    ven_bvd_id_num                                non-null    19,090 (  1.56%)  missing 1,204,533 ( 98.44%)
+
+  [RAW industry SIC stats] SIC/Industry statistics — 1,223,623 rows
+  Column                                    Non-null  Missing%   Unique Top-3 values
+  ---------------------------------------- --------- --------- -------- ----------------------------------------
+  tar_primary_sic_code                     1,032,871     15.6%      815   7374.0(43461), 7371.0(35089), 4911.0(25976)
+  tar_sic_codes                            [NOT IN DF]
+  tar_primary_naics_code                   1,032,871     15.6%    1,052   518210.0(43463), 541511.0(35093), 511210.0(21366)
+  acq_primary_sic_code                     1,022,947     16.4%      815   6733.0(79267), 6799.0(55751), 6719.0(49473)
+  acq_sic_codes                            [NOT IN DF]
+  ven_primary_sic_code                     [NOT IN DF]
+
+  [RAW industry SIC stats] Description fields coverage:
+    tar_overview                             non-null   349,206 ( 28.54%)
+    acq_overview                             non-null   649,735 ( 53.10%)
+
+  [cascade SIC] acq_primary_sic_code recovery: filled 72,342 rows (missing: 200,676 -> 128,334)
+
+  [After cascade SIC recovery] SIC/Industry statistics — 1,223,623 rows
+  Column                                    Non-null  Missing%   Unique Top-3 values
+  ---------------------------------------- --------- --------- -------- ----------------------------------------
+  tar_primary_sic_code                     1,032,871     15.6%      815   7374.0(43461), 7371.0(35089), 4911.0(25976)
+  tar_sic_codes                            [NOT IN DF]
+  tar_primary_naics_code                   1,032,871     15.6%    1,052   518210.0(43463), 541511.0(35093), 511210.0(21366)
+  acq_primary_sic_code                     1,095,289     10.5%      815   6733.0(80113), 6799.0(59194), 6719.0(53548)
+  acq_sic_codes                            [NOT IN DF]
+  ven_primary_sic_code                     [NOT IN DF]
+
+  [After cascade SIC recovery] Description fields coverage:
+    tar_overview                             non-null   349,206 ( 28.54%)
+    acq_overview                             non-null   649,735 ( 53.10%)
+
+  After drop tar_name=NaN: 1,097,248 (dropped 126,375)
+
+  [After drop tar_name=NaN] coverage — 1,097,248 rows
+    deal_num                                      non-null 1,097,248 (100.00%)  missing         0 (  0.00%)
+    tar_name                                      non-null 1,097,248 (100.00%)  missing         0 (  0.00%)
+    tar_bvd_id_num                                non-null   787,773 ( 71.80%)  missing   309,475 ( 28.20%)
+    tar_orbis_id_num                              non-null   751,784 ( 68.52%)  missing   345,464 ( 31.48%)
+    tar_overview                                  non-null   349,206 ( 31.83%)  missing   748,042 ( 68.17%)
+    acq_overview                                  non-null   590,486 ( 53.82%)  missing   506,762 ( 46.18%)
+    tar_primary_sic_code                          non-null 1,032,871 ( 94.13%)  missing    64,377 (  5.87%)
+    tar_primary_naics_code                        non-null 1,032,871 ( 94.13%)  missing    64,377 (  5.87%)
+    acq_name                                      non-null   913,183 ( 83.22%)  missing   184,065 ( 16.78%)
+    acq_bvd_id_num                                non-null   812,483 ( 74.05%)  missing   284,765 ( 25.95%)
+    acq_orbis_id_num                              non-null   766,125 ( 69.82%)  missing   331,123 ( 30.18%)
+    acq_primary_sic_code                          non-null   977,360 ( 89.07%)  missing   119,888 ( 10.93%)
+    ven_name                                      non-null    25,216 (  2.30%)  missing 1,072,032 ( 97.70%)
+    ven_bvd_id_num                                non-null    17,352 (  1.58%)  missing 1,079,896 ( 98.42%)
+  After de-dup (deal_num, tar_key): 1,096,864 (dropped 384 duplicates)
+  After drop deal_num=NaN: 1,096,864 (dropped 0)
+  [sic2] tar_sic2: non-null 1,032,498 | unique 82
+  [sic2] acq_sic2: non-null 977,010 | unique 82
+
+  [UNIT] rows=1,096,864 | unique deal_num=1,018,369 | extra rows from multi-target=78,495 (7.71%)
+  [UNIT] merge with 01_deal_overview.csv on (deal_num, tar_key) ONLY.
+
+  [FINAL 01_deal_sic_industry.csv] coverage — 1,096,864 rows
+    deal_num                                      non-null 1,096,864 (100.00%)  missing         0 (  0.00%)
+    tar_name                                      non-null 1,096,864 (100.00%)  missing         0 (  0.00%)
+    tar_bvd_id_num                                non-null   787,442 ( 71.79%)  missing   309,422 ( 28.21%)
+    tar_orbis_id_num                              non-null   751,464 ( 68.51%)  missing   345,400 ( 31.49%)
+    tar_overview                                  non-null   349,065 ( 31.82%)  missing   747,799 ( 68.18%)
+    acq_overview                                  non-null   590,439 ( 53.83%)  missing   506,425 ( 46.17%)
+    tar_primary_sic_code                          non-null 1,032,498 ( 94.13%)  missing    64,366 (  5.87%)
+    tar_primary_naics_code                        non-null 1,032,498 ( 94.13%)  missing    64,366 (  5.87%)
+    acq_name                                      non-null   913,100 ( 83.25%)  missing   183,764 ( 16.75%)
+    acq_bvd_id_num                                non-null   812,422 ( 74.07%)  missing   284,442 ( 25.93%)
+    acq_orbis_id_num                              non-null   766,064 ( 69.84%)  missing   330,800 ( 30.16%)
+    acq_primary_sic_code                          non-null   977,010 ( 89.07%)  missing   119,854 ( 10.93%)
+    ven_name                                      non-null    25,211 (  2.30%)  missing 1,071,653 ( 97.70%)
+    ven_bvd_id_num                                non-null    17,348 (  1.58%)  missing 1,079,516 ( 98.42%)
+
+  [FINAL 01_deal_sic_industry.csv SIC stats] SIC/Industry statistics — 1,096,864 rows
+  Column                                    Non-null  Missing%   Unique Top-3 values
+  ---------------------------------------- --------- --------- -------- ----------------------------------------
+  tar_primary_sic_code                     1,032,498      5.9%      815   7374(43454), 7371(35080), 4911(25959)
+  tar_sic_codes                            [NOT IN DF]
+  tar_primary_naics_code                   1,032,498      5.9%    1,052   518210.0(43456), 541511.0(35084), 511210.0(21361)
+  acq_primary_sic_code                       977,010     10.9%      815   6733(51582), 6799(50928), 6719(46471)
+  acq_sic_codes                            [NOT IN DF]
+  ven_primary_sic_code                     [NOT IN DF]
+
+  [FINAL 01_deal_sic_industry.csv SIC stats] Description fields coverage:
+    tar_overview                             non-null   349,065 ( 31.82%)
+    acq_overview                             non-null   590,439 ( 53.83%)
+
+  Saved -> D:\MA\data\cleaned\01_deal_sic_industry.csv  (1,096,864 rows x 17 cols)
+
+==============================================================================
+Module M2.5+M4 — Industry export -> 01_deal_sic_industry.csv (FIX composite PK)
+==============================================================================
+  NOTE: MUST RUN together with fixed 01a_clean_overview.py
+        PRIMARY COMPOSITE KEY = (deal_num, tar_bvd_id_num, acq_bvd_id_num)
+        overview  -> 01_deal_overview.csv      (country, regulatory, vendor)
+        industry  -> 01_deal_sic_industry.csv  (SIC / NAICS, descriptions)
+        Merge BOTH files on FULL composite key, NOT deal_num alone.
+  [keys] industry: found=['deal_num', 'tar_name', 'tar_bvd_id_num', 'tar_orbis_id_num', 'acq_name', 'acq_bvd_id_num', 'acq_orbis_id_num', 'ven_name', 'ven_bvd_id_num']  missing=[]
+  [expected] industry: all 14 expected columns present
+  [industry] loaded: 1,223,623 rows | 20 cols | unique deal_num: 1,066,484
+
+  [RAW industry (after load)] coverage — 1,223,623 rows
+    deal_num                                      non‑null 1,223,623 (100.00%)  missing         0 (  0.00%)
+    tar_name                                      non‑null 1,097,248 ( 89.67%)  missing   126,375 ( 10.33%)
+    tar_bvd_id_num                                non‑null   787,773 ( 64.38%)  missing   435,850 ( 35.62%)
+    tar_orbis_id_num                              non‑null   751,784 ( 61.44%)  missing   471,839 ( 38.56%)
+    tar_overview                                  non‑null   349,206 ( 28.54%)  missing   874,417 ( 71.46%)
+    acq_overview                                  non‑null   649,735 ( 53.10%)  missing   573,888 ( 46.90%)
+    tar_primary_sic_code                          non‑null 1,032,871 ( 84.41%)  missing   190,752 ( 15.59%)
+    tar_primary_naics_code                        non‑null 1,032,871 ( 84.41%)  missing   190,752 ( 15.59%)
+    acq_name                                      non‑null 1,031,508 ( 84.30%)  missing   192,115 ( 15.70%)
+    acq_bvd_id_num                                non‑null   894,114 ( 73.07%)  missing   329,509 ( 26.93%)
+    acq_orbis_id_num                              non‑null   843,555 ( 68.94%)  missing   380,068 ( 31.06%)
+    acq_primary_sic_code                          non‑null 1,022,947 ( 83.60%)  missing   200,676 ( 16.40%)
+    ven_name                                      non‑null    28,574 (  2.34%)  missing 1,195,049 ( 97.66%)
+    ven_bvd_id_num                                non‑null    19,090 (  1.56%)  missing 1,204,533 ( 98.44%)
+
+  [RAW industry SIC stats] SIC/Industry statistics — 1,223,623 rows
+  Column                                    Non‑null  Missing%   Unique Top‑3 values
+  ‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑ ‑‑‑‑‑‑‑‑‑ ‑‑‑‑‑‑‑‑‑ ‑‑‑‑‑‑‑‑ ‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑
+  tar_primary_sic_code                     1,032,871     15.6%      815   7374.0(43461), 7371.0(35089), 4911.0(25976)
+  tar_sic_codes                            [NOT IN DF]
+  tar_primary_naics_code                   1,032,871     15.6%    1,052   518210.0(43463), 541511.0(35093), 511210.0(21366)
+  acq_primary_sic_code                     1,022,947     16.4%      815   6733.0(79267), 6799.0(55751), 6719.0(49473)
+  acq_sic_codes                            [NOT IN DF]
+  ven_primary_sic_code                     [NOT IN DF]
+
+  [RAW industry SIC stats] Description fields coverage:
+    tar_overview                             non‑null   349,206 ( 28.54%)
+    acq_overview                             non‑null   649,735 ( 53.10%)
+  ⚠ 01_deal_sic_industry.csv already exists — this run will OVERWRITE it.
+
+  [cascade SIC] acq_primary_sic_code recovery: filled 72,342 rows (missing: 200,676 -> 128,334)
+
+  [After cascade SIC recovery] SIC/Industry statistics — 1,223,623 rows
+  Column                                    Non‑null  Missing%   Unique Top‑3 values
+  ‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑ ‑‑‑‑‑‑‑‑‑ ‑‑‑‑‑‑‑‑‑ ‑‑‑‑‑‑‑‑ ‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑
+  tar_primary_sic_code                     1,032,871     15.6%      815   7374.0(43461), 7371.0(35089), 4911.0(25976)
+  tar_sic_codes                            [NOT IN DF]
+  tar_primary_naics_code                   1,032,871     15.6%    1,052   518210.0(43463), 541511.0(35093), 511210.0(21366)
+  acq_primary_sic_code                     1,095,289     10.5%      815   6733.0(80113), 6799.0(59194), 6719.0(53548)
+  acq_sic_codes                            [NOT IN DF]
+  ven_primary_sic_code                     [NOT IN DF]
+
+  [After cascade SIC recovery] Description fields coverage:
+    tar_overview                             non‑null   349,206 ( 28.54%)
+    acq_overview                             non‑null   649,735 ( 53.10%)
+
+  After drop tar_name=NaN: 1,097,248 (dropped 126,375)
+  Deduplicate compound PK(deal_num + tar_fallback + acq_fallback): dropped 201 duplicate rows, remaining=1,097,047
+  After drop deal_num=NaN: 1,097,047 (dropped 0)
+  [sic2] tar_sic2: non‑null 1,032,676 | unique 82
+  [sic2] acq_sic2: non‑null 977,187 | unique 82
+
+  [UNIT CHECK] rows=1,097,047 | unique deal_num=1,018,369
+  Multi‑acquirer extra rows (row > deal count): 78,678
+  ⚠️ MERGE RULE: Always merge with overview on FULL COMPOSITE KEY: deal_num + tar_bvd_id_num + acq_bvd_id_num, NOT only deal_num!
+
+  [FINAL 01_deal_sic_industry.csv] coverage — 1,097,047 rows
+    deal_num                                      non‑null 1,097,047 (100.00%)  missing         0 (  0.00%)
+    tar_name                                      non‑null 1,097,047 (100.00%)  missing         0 (  0.00%)
+    tar_bvd_id_num                                non‑null   787,606 ( 71.79%)  missing   309,441 ( 28.21%)
+    tar_orbis_id_num                              non‑null   751,621 ( 68.51%)  missing   345,426 ( 31.49%)
+    tar_overview                                  non‑null   349,137 ( 31.83%)  missing   747,910 ( 68.17%)
+    acq_overview                                  non‑null   590,441 ( 53.82%)  missing   506,606 ( 46.18%)
+    tar_primary_sic_code                          non‑null 1,032,676 ( 94.13%)  missing    64,371 (  5.87%)
+    tar_primary_naics_code                        non‑null 1,032,676 ( 94.13%)  missing    64,371 (  5.87%)
+    acq_name                                      non‑null   913,102 ( 83.23%)  missing   183,945 ( 16.77%)
+    acq_bvd_id_num                                non‑null   812,424 ( 74.06%)  missing   284,623 ( 25.94%)
+    acq_orbis_id_num                              non‑null   766,066 ( 69.83%)  missing   330,981 ( 30.17%)
+    acq_primary_sic_code                          non‑null   977,187 ( 89.07%)  missing   119,860 ( 10.93%)
+    ven_name                                      non‑null    25,213 (  2.30%)  missing 1,071,834 ( 97.70%)
+    ven_bvd_id_num                                non‑null    17,350 (  1.58%)  missing 1,079,697 ( 98.42%)
+
+  [FINAL 01_deal_sic_industry.csv SIC stats] SIC/Industry statistics — 1,097,047 rows
+  Column                                    Non‑null  Missing%   Unique Top‑3 values
+  ‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑ ‑‑‑‑‑‑‑‑‑ ‑‑‑‑‑‑‑‑‑ ‑‑‑‑‑‑‑‑ ‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑
+  tar_primary_sic_code                     1,032,676      5.9%      815   7374(43460), 7371(35083), 4911(25966)
+  tar_sic_codes                            [NOT IN DF]
+  tar_primary_naics_code                   1,032,676      5.9%    1,052   518210.0(43462), 541511.0(35087), 511210.0(21363)
+  acq_primary_sic_code                       977,187     10.9%      815   6733(51583), 6799(50937), 6719(46483)
+  acq_sic_codes                            [NOT IN DF]
+  ven_primary_sic_code                     [NOT IN DF]
+
+  [FINAL 01_deal_sic_industry.csv SIC stats] Description fields coverage:
+    tar_overview                             non‑null   349,137 ( 31.83%)
+    acq_overview                             non‑null   590,441 ( 53.82%)
+
+  Saved -> D:\MA\data\cleaned\01_deal_sic_industry.csv  (1,097,047 rows x 16 cols)
+
+==============================================================================
+Module M2.5+M4 — Industry export -> 01_deal_sic_industry.csv (FIX composite PK)
+==============================================================================
+  NOTE: MUST RUN together with fixed 01a_clean_overview.py
+        PRIMARY COMPOSITE KEY = (deal_num, tar_bvd_id_num, acq_bvd_id_num)
+        overview  -> 01_deal_overview.csv      (country, regulatory, vendor)
+        industry  -> 01_deal_sic_industry.csv  (SIC / NAICS, descriptions)
+        Merge BOTH files on FULL composite key, NOT deal_num alone.
+  [keys] industry: found=['deal_num', 'tar_name', 'tar_bvd_id_num', 'tar_orbis_id_num', 'acq_name', 'acq_bvd_id_num', 'acq_orbis_id_num', 'ven_name', 'ven_bvd_id_num']  missing=[]
+  [expected] industry: all 14 expected columns present
+  [industry] loaded: 1,223,623 rows | 20 cols | unique deal_num: 1,066,484
+
+  [RAW industry (after load)] coverage — 1,223,623 rows
+    deal_num                                      non‑null 1,223,623 (100.00%)  missing         0 (  0.00%)
+    tar_name                                      non‑null 1,097,248 ( 89.67%)  missing   126,375 ( 10.33%)
+    tar_bvd_id_num                                non‑null   787,773 ( 64.38%)  missing   435,850 ( 35.62%)
+    tar_orbis_id_num                              non‑null   751,784 ( 61.44%)  missing   471,839 ( 38.56%)
+    tar_overview                                  non‑null   349,206 ( 28.54%)  missing   874,417 ( 71.46%)
+    acq_overview                                  non‑null   649,735 ( 53.10%)  missing   573,888 ( 46.90%)
+    tar_primary_sic_code                          non‑null 1,032,871 ( 84.41%)  missing   190,752 ( 15.59%)
+    tar_primary_naics_code                        non‑null 1,032,871 ( 84.41%)  missing   190,752 ( 15.59%)
+    acq_name                                      non‑null 1,031,508 ( 84.30%)  missing   192,115 ( 15.70%)
+    acq_bvd_id_num                                non‑null   894,114 ( 73.07%)  missing   329,509 ( 26.93%)
+    acq_orbis_id_num                              non‑null   843,555 ( 68.94%)  missing   380,068 ( 31.06%)
+    acq_primary_sic_code                          non‑null 1,022,947 ( 83.60%)  missing   200,676 ( 16.40%)
+    ven_name                                      non‑null    28,574 (  2.34%)  missing 1,195,049 ( 97.66%)
+    ven_bvd_id_num                                non‑null    19,090 (  1.56%)  missing 1,204,533 ( 98.44%)
+
+  [RAW industry SIC stats] SIC/Industry statistics — 1,223,623 rows
+  Column                                    Non‑null  Missing%   Unique Top‑3 values
+  ‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑ ‑‑‑‑‑‑‑‑‑ ‑‑‑‑‑‑‑‑‑ ‑‑‑‑‑‑‑‑ ‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑
+  tar_primary_sic_code                     1,032,871     15.6%      815   7374.0(43461), 7371.0(35089), 4911.0(25976)
+  tar_sic_codes                            [NOT IN DF]
+  tar_primary_naics_code                   1,032,871     15.6%    1,052   518210.0(43463), 541511.0(35093), 511210.0(21366)
+  acq_primary_sic_code                     1,022,947     16.4%      815   6733.0(79267), 6799.0(55751), 6719.0(49473)
+  acq_sic_codes                            [NOT IN DF]
+  ven_primary_sic_code                     [NOT IN DF]
+
+  [RAW industry SIC stats] Description fields coverage:
+    tar_overview                             non‑null   349,206 ( 28.54%)
+    acq_overview                             non‑null   649,735 ( 53.10%)
+  ⚠ 01_deal_sic_industry.csv already exists — this run will OVERWRITE it.
+
+  [cascade SIC] acq_primary_sic_code recovery: filled 72,342 rows (missing: 200,676 -> 128,334)
+
+  [After cascade SIC recovery] SIC/Industry statistics — 1,223,623 rows
+  Column                                    Non‑null  Missing%   Unique Top‑3 values
+  ‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑ ‑‑‑‑‑‑‑‑‑ ‑‑‑‑‑‑‑‑‑ ‑‑‑‑‑‑‑‑ ‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑
+  tar_primary_sic_code                     1,032,871     15.6%      815   7374.0(43461), 7371.0(35089), 4911.0(25976)
+  tar_sic_codes                            [NOT IN DF]
+  tar_primary_naics_code                   1,032,871     15.6%    1,052   518210.0(43463), 541511.0(35093), 511210.0(21366)
+  acq_primary_sic_code                     1,095,289     10.5%      815   6733.0(80113), 6799.0(59194), 6719.0(53548)
+  acq_sic_codes                            [NOT IN DF]
+  ven_primary_sic_code                     [NOT IN DF]
+
+  [After cascade SIC recovery] Description fields coverage:
+    tar_overview                             non‑null   349,206 ( 28.54%)
+    acq_overview                             non‑null   649,735 ( 53.10%)
+
+  After drop tar_name=NaN: 1,097,248 (dropped 126,375)
+  Deduplicate compound PK(deal_num + tar_fallback + acq_fallback): dropped 201 duplicate rows, remaining=1,097,047
+  After drop deal_num=NaN: 1,097,047 (dropped 0)
+  [sic2] tar_sic2: non‑null 1,032,676 | unique 82
+  [sic2] acq_sic2: non‑null 977,187 | unique 82
+  [DEDUP-T1_5key] 1,097,047 -> 1,097,047 rows (dropped 0 pure duplicates)
+  [DEDUP-T1_5key] unique deal_num: 1,018,369 | 多标的 deal: 48,840（保留多行，未折叠）
+
+  [FINAL 01_deal_sic_industry.csv] coverage — 1,097,047 rows
+    deal_num                                      non‑null 1,097,047 (100.00%)  missing         0 (  0.00%)
+    tar_name                                      non‑null 1,097,047 (100.00%)  missing         0 (  0.00%)
+    tar_bvd_id_num                                non‑null   787,606 ( 71.79%)  missing   309,441 ( 28.21%)
+    tar_orbis_id_num                              non‑null   751,621 ( 68.51%)  missing   345,426 ( 31.49%)
+    tar_overview                                  non‑null   349,137 ( 31.83%)  missing   747,910 ( 68.17%)
+    acq_overview                                  non‑null   590,441 ( 53.82%)  missing   506,606 ( 46.18%)
+    tar_primary_sic_code                          non‑null 1,032,676 ( 94.13%)  missing    64,371 (  5.87%)
+    tar_primary_naics_code                        non‑null 1,032,676 ( 94.13%)  missing    64,371 (  5.87%)
+    acq_name                                      non‑null   913,102 ( 83.23%)  missing   183,945 ( 16.77%)
+    acq_bvd_id_num                                non‑null   812,424 ( 74.06%)  missing   284,623 ( 25.94%)
+    acq_orbis_id_num                              non‑null   766,066 ( 69.83%)  missing   330,981 ( 30.17%)
+    acq_primary_sic_code                          non‑null   977,187 ( 89.07%)  missing   119,860 ( 10.93%)
+    ven_name                                      non‑null    25,213 (  2.30%)  missing 1,071,834 ( 97.70%)
+    ven_bvd_id_num                                non‑null    17,350 (  1.58%)  missing 1,079,697 ( 98.42%)
+
+  [FINAL 01_deal_sic_industry.csv SIC stats] SIC/Industry statistics — 1,097,047 rows
+  Column                                    Non‑null  Missing%   Unique Top‑3 values
+  ‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑ ‑‑‑‑‑‑‑‑‑ ‑‑‑‑‑‑‑‑‑ ‑‑‑‑‑‑‑‑ ‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑
+  tar_primary_sic_code                     1,032,676      5.9%      815   7374(43460), 7371(35083), 4911(25966)
+  tar_sic_codes                            [NOT IN DF]
+  tar_primary_naics_code                   1,032,676      5.9%    1,052   518210.0(43462), 541511.0(35087), 511210.0(21363)
+  acq_primary_sic_code                       977,187     10.9%      815   6733(51583), 6799(50937), 6719(46483)
+  acq_sic_codes                            [NOT IN DF]
+  ven_primary_sic_code                     [NOT IN DF]
+
+  [FINAL 01_deal_sic_industry.csv SIC stats] Description fields coverage:
+    tar_overview                             non‑null   349,137 ( 31.83%)
+    acq_overview                             non‑null   590,441 ( 53.82%)
+
+  Saved -> D:\MA\data\cleaned\01_deal_sic_industry.csv  (1,097,047 rows x 16 cols)
+
+==============================================================================
+Module M2.5+M4 — Industry export -> 01_deal_sic_industry.csv (FIX composite PK)
+==============================================================================
+  NOTE: MUST RUN together with fixed 01a_clean_overview.py
+        PRIMARY COMPOSITE KEY = (deal_num, tar_bvd_id_num, acq_bvd_id_num)
+        overview  -> 01_deal_overview.csv      (country, regulatory, vendor)
+        industry  -> 01_deal_sic_industry.csv  (SIC / NAICS, descriptions)
+        Merge BOTH files on FULL composite key, NOT deal_num alone.
+  [keys] industry: found=['deal_num', 'tar_name', 'tar_bvd_id_num', 'tar_orbis_id_num', 'acq_name', 'acq_bvd_id_num', 'acq_orbis_id_num', 'ven_name', 'ven_bvd_id_num']  missing=[]
+  [expected] industry: all 14 expected columns present
+  [industry] loaded: 1,223,623 rows | 20 cols | unique deal_num: 1,066,484
+
+  [RAW industry (after load)] coverage — 1,223,623 rows
+    deal_num                                      non‑null 1,223,623 (100.00%)  missing         0 (  0.00%)
+    tar_name                                      non‑null 1,097,248 ( 89.67%)  missing   126,375 ( 10.33%)
+    tar_bvd_id_num                                non‑null   787,773 ( 64.38%)  missing   435,850 ( 35.62%)
+    tar_orbis_id_num                              non‑null   751,784 ( 61.44%)  missing   471,839 ( 38.56%)
+    tar_overview                                  non‑null   349,206 ( 28.54%)  missing   874,417 ( 71.46%)
+    acq_overview                                  non‑null   649,735 ( 53.10%)  missing   573,888 ( 46.90%)
+    tar_primary_sic_code                          non‑null 1,032,871 ( 84.41%)  missing   190,752 ( 15.59%)
+    tar_primary_naics_code                        non‑null 1,032,871 ( 84.41%)  missing   190,752 ( 15.59%)
+    acq_name                                      non‑null 1,031,508 ( 84.30%)  missing   192,115 ( 15.70%)
+    acq_bvd_id_num                                non‑null   894,114 ( 73.07%)  missing   329,509 ( 26.93%)
+    acq_orbis_id_num                              non‑null   843,555 ( 68.94%)  missing   380,068 ( 31.06%)
+    acq_primary_sic_code                          non‑null 1,022,947 ( 83.60%)  missing   200,676 ( 16.40%)
+    ven_name                                      non‑null    28,574 (  2.34%)  missing 1,195,049 ( 97.66%)
+    ven_bvd_id_num                                non‑null    19,090 (  1.56%)  missing 1,204,533 ( 98.44%)
+
+  [RAW industry SIC stats] SIC/Industry statistics — 1,223,623 rows
+  Column                                    Non‑null  Missing%   Unique Top‑3 values
+  ‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑ ‑‑‑‑‑‑‑‑‑ ‑‑‑‑‑‑‑‑‑ ‑‑‑‑‑‑‑‑ ‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑
+  tar_primary_sic_code                     1,032,871     15.6%      815   7374.0(43461), 7371.0(35089), 4911.0(25976)
+  tar_sic_codes                            [NOT IN DF]
+  tar_primary_naics_code                   1,032,871     15.6%    1,052   518210.0(43463), 541511.0(35093), 511210.0(21366)
+  acq_primary_sic_code                     1,022,947     16.4%      815   6733.0(79267), 6799.0(55751), 6719.0(49473)
+  acq_sic_codes                            [NOT IN DF]
+  ven_primary_sic_code                     [NOT IN DF]
+
+  [RAW industry SIC stats] Description fields coverage:
+    tar_overview                             non‑null   349,206 ( 28.54%)
+    acq_overview                             non‑null   649,735 ( 53.10%)
+  ⚠ 01_deal_sic_industry.csv already exists — this run will OVERWRITE it.
+
+  [cascade SIC] acq_primary_sic_code recovery: filled 72,342 rows (missing: 200,676 -> 128,334)
+
+  [After cascade SIC recovery] SIC/Industry statistics — 1,223,623 rows
+  Column                                    Non‑null  Missing%   Unique Top‑3 values
+  ‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑ ‑‑‑‑‑‑‑‑‑ ‑‑‑‑‑‑‑‑‑ ‑‑‑‑‑‑‑‑ ‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑
+  tar_primary_sic_code                     1,032,871     15.6%      815   7374.0(43461), 7371.0(35089), 4911.0(25976)
+  tar_sic_codes                            [NOT IN DF]
+  tar_primary_naics_code                   1,032,871     15.6%    1,052   518210.0(43463), 541511.0(35093), 511210.0(21366)
+  acq_primary_sic_code                     1,095,289     10.5%      815   6733.0(80113), 6799.0(59194), 6719.0(53548)
+  acq_sic_codes                            [NOT IN DF]
+  ven_primary_sic_code                     [NOT IN DF]
+
+  [After cascade SIC recovery] Description fields coverage:
+    tar_overview                             non‑null   349,206 ( 28.54%)
+    acq_overview                             non‑null   649,735 ( 53.10%)
+
+  After drop tar_name=NaN: 1,097,248 (dropped 126,375)
+  After drop deal_num=NaN: 1,097,248 (dropped 0)
+  [sic2] tar_sic2: non‑null 1,032,871 | unique 82
+  [sic2] acq_sic2: non‑null 977,360 | unique 82
+  [DEDUP-T1_5key] 1,097,248 -> 1,097,145 rows (dropped 103 pure duplicates)
+  [DEDUP-T1_5key] unique deal_num: 1,018,369 | 多标的 deal: 48,847（保留多行，未折叠）
+
+  [FINAL 01_deal_sic_industry.csv] coverage — 1,097,145 rows
+    deal_num                                      non‑null 1,097,145 (100.00%)  missing         0 (  0.00%)
+    tar_name                                      non‑null 1,097,145 (100.00%)  missing         0 (  0.00%)
+    tar_bvd_id_num                                non‑null   787,704 ( 71.80%)  missing   309,441 ( 28.20%)
+    tar_orbis_id_num                              non‑null   751,715 ( 68.52%)  missing   345,430 ( 31.48%)
+    tar_overview                                  non‑null   349,182 ( 31.83%)  missing   747,963 ( 68.17%)
+    acq_overview                                  non‑null   590,441 ( 53.82%)  missing   506,704 ( 46.18%)
+    tar_primary_sic_code                          non‑null 1,032,771 ( 94.13%)  missing    64,374 (  5.87%)
+    tar_primary_naics_code                        non‑null 1,032,771 ( 94.13%)  missing    64,374 (  5.87%)
+    acq_name                                      non‑null   913,102 ( 83.23%)  missing   184,043 ( 16.77%)
+    acq_bvd_id_num                                non‑null   812,424 ( 74.05%)  missing   284,721 ( 25.95%)
+    acq_orbis_id_num                              non‑null   766,066 ( 69.82%)  missing   331,079 ( 30.18%)
+    acq_primary_sic_code                          non‑null   977,269 ( 89.07%)  missing   119,876 ( 10.93%)
+    ven_name                                      non‑null    25,216 (  2.30%)  missing 1,071,929 ( 97.70%)
+    ven_bvd_id_num                                non‑null    17,352 (  1.58%)  missing 1,079,793 ( 98.42%)
+
+  [FINAL 01_deal_sic_industry.csv SIC stats] SIC/Industry statistics — 1,097,145 rows
+  Column                                    Non‑null  Missing%   Unique Top‑3 values
+  ‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑ ‑‑‑‑‑‑‑‑‑ ‑‑‑‑‑‑‑‑‑ ‑‑‑‑‑‑‑‑ ‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑
+  tar_primary_sic_code                     1,032,771      5.9%      815   7374(43460), 7371(35085), 4911(25975)
+  tar_sic_codes                            [NOT IN DF]
+  tar_primary_naics_code                   1,032,771      5.9%    1,052   518210.0(43462), 541511.0(35089), 511210.0(21364)
+  acq_primary_sic_code                       977,269     10.9%      815   6733(51585), 6799(50942), 6719(46488)
+  acq_sic_codes                            [NOT IN DF]
+  ven_primary_sic_code                     [NOT IN DF]
+
+  [FINAL 01_deal_sic_industry.csv SIC stats] Description fields coverage:
+    tar_overview                             non‑null   349,182 ( 31.83%)
+    acq_overview                             non‑null   590,441 ( 53.82%)
+
+  Saved -> D:\MA\data\cleaned\01_deal_sic_industry.csv  (1,097,145 rows x 16 cols)
