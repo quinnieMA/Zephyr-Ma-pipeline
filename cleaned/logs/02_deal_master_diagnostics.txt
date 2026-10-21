@@ -1,0 +1,216 @@
+
+================================================================================
+02_merge_deal_master.py — v10‑mod 【T1五元最高优先级】
+================================================================================
+started: 2026-10-21 14:20:37
+cleaned: D:\MA\data\cleaned
+  合并键: 实体模块 = 多键级联 (T1_5key → T2_2key_bvdid → T3_2key_name → T4_tarkey → T5_deal)，deal 级模块 = deal_num
+  输出  : 02_deal_master.csv（一行一 deal）—— [V11] 02_entity_pairs.csv 不再输出，实体对齐在 03
+  comment     : 不在本脚本合并（v9），由 06/07 之后按 deal_num 单独并入
+  vendor_name : 不在本脚本合并（v10）—— 01a overview 本身即含 ven_name
+  vendor_type : disabled，按用户决定挪到 07/08（文件匹配有歧义）
+
+  [SCAN] D:\MA\data\cleaned
+    found 12 file(s):
+      - 01_deal_multiple.csv
+      - 01_deal_overview.csv
+      - 01_deal_sic_industry.csv
+      - 01_deal_structure_date.csv
+      - 01_deal_value.csv
+      - 01a_deal_vendor_name.csv
+      - 01b_deal_info_source_count.csv
+      - 01b_deal_vendor_type.csv
+      - 01b_deal_vendor_type_profile.csv
+      - 01b_vendor_unmapped.csv
+      - 01c_comments_features.csv
+      - 01c_comments_features_raw.csv
+
+================================================================================
+STEP 0 — Load modules
+================================================================================
+    [structure] matched -> 01_deal_structure_date.csv
+      [DROP‑INDEX] ['unnamed_0']
+  loaded structure: 01_deal_structure_date.csv | 1,066,213 rows | unique deal_num: 1,066,213
+  [DISABLED] industry
+    [multiple] matched -> 01_deal_multiple.csv
+  loaded multiple: 01_deal_multiple.csv | 1,066,572 rows | unique deal_num: 1,066,572
+    [value] matched -> 01_deal_value.csv
+      [DROP‑INDEX] ['unnamed_0']
+  loaded value: 01_deal_value.csv | 1,066,213 rows | unique deal_num: 1,066,213
+  [DISABLED] overview
+  [DISABLED] vendor_type
+    [info_source] matched -> 01b_deal_info_source_count.csv
+  loaded info_source: 01b_deal_info_source_count.csv | 941,909 rows | unique deal_num: 941,909
+
+================================================================================
+STEP 1 — Anchor = structure
+================================================================================
+  ANCHOR universe: 1,066,213 deals
+
+  -- anchor: 1,066,213 rows x 57 cols --
+    top‑5 missing: postponed_d (100.0%), withdrawn_d (98.2%), expected_comp_d (94.0%), last_pct_stake_up_d (92.5%), deal_fin_n (85.5%)
+
+================================================================================
+STEP 1b — Entity coverage vs universe (左连接自然缺失，不硬拗)
+================================================================================
+
+================================================================================
+STEP 4 — Merge deal‑level modules (on deal_num)
+================================================================================
+
+  [SKIP] vendor_type
+
+================================================================================
+STEP 4 — Merge multiple
+================================================================================
+
+  估值倍数审计（只标记，不改值，不删列）, 11 列
+    可用列 10 / 11；标记不可信极值 10 列
+
+  [常量列报告][multiple] 1 列（保留不删）：
+    pre_cap_mul_ly                   唯一值=[np.float64(0.0)]        non‑null=33,403
+
+  ── MODULE [multiple] ── 1,066,572 rows x 22 cols
+    column                                 non‑null     pct      mean/uniq
+    ------------------------------------------------------------------------
+    deal_num                              1,066,572 100.00%               
+    pre_rev_mul_ly                          117,464  11.01%               
+    pre_ebitda_mul_ly                        46,868   4.39%               
+    pre_ebit_mul_ly                          59,597   5.59%               
+    pre_pbt_mul_ly                           72,169   6.77%               
+    pre_pat_mul_ly                           61,824   5.80%               
+    pre_np_mul_ly                            12,167   1.14%               
+    pre_ta_mul_ly                           132,422  12.42%               
+    pre_na_mul_ly                            23,143   2.17%               
+    pre_cl_mul_ly                           102,521   9.61%               
+    pre_eq_mul_ly                           109,724  10.29%               
+    pre_cap_mul_ly                           33,403   3.13%               
+    pre_rev_mul_ly_implausible              117,464  11.01%               
+    pre_ebitda_mul_ly_implausible            46,868   4.39%               
+    pre_ebit_mul_ly_implausible              59,597   5.59%               
+    pre_pbt_mul_ly_implausible               72,169   6.77%               
+    pre_pat_mul_ly_implausible               61,824   5.80%               
+    pre_np_mul_ly_implausible                12,167   1.14%               
+    pre_ta_mul_ly_implausible               132,422  12.42%               
+    pre_na_mul_ly_implausible                23,143   2.17%               
+    pre_cl_mul_ly_implausible               102,521   9.61%               
+    pre_eq_mul_ly_implausible               109,724  10.29%               
+  merged. rows=1,066,213 (unchanged)
+
+================================================================================
+STEP 4 — Merge value
+================================================================================
+      [!] stake_init_pct             丢失 77,600 (7.62%) > 0.1% —— 保留原列，新增 stake_init_pct_num
+          无法解析样例: ['Unknown minority', 'Unknown %', 'Unknown majority']
+
+  [!] 1 列因丢失过大未转换（原列保留，另加 _num）
+      [冲突] 1 列加 _value 后缀: ['src_file']
+
+  ── MODULE [value] ── 1,066,213 rows x 20 cols
+    column                                 non‑null     pct      mean/uniq
+    ------------------------------------------------------------------------
+    deal_num                              1,066,213 100.00%               
+    src_file_value                        1,066,213 100.00%        uniq=21
+    deal_val_usd                            394,126  36.97%               
+    deal_val_nat                            394,127  36.97%               
+    deal_eq_val_usd                         148,651  13.94%               
+    deal_eq_val_nat                         148,651  13.94%               
+    deal_ent_val_usd                         28,688   2.69%               
+    deal_ent_val_nat                         28,688   2.69%               
+    deal_ent_val_mod_usd                     92,226   8.65%               
+    deal_ent_val_mod_nat                     92,226   8.65%               
+    deal_tar_val_tot_usd                    338,453  31.74%               
+    deal_tar_val_tot_nat                    338,453  31.74%               
+    fee_income_mod_usd                      299,096  28.05%               
+    fee_income_rep_usd                          272   0.03%               
+    stake_init_pct                        1,018,117  95.49%    uniq=20,773
+    stake_acq_pct                           903,049  84.70%               
+    stake_final_pct                         944,986  88.63%               
+    irr_pct                                     322   0.03%               
+    deal_ccy                                416,075  39.02%       uniq=155
+    stake_init_pct_num                      940,517  88.21%               
+  merged. rows=1,066,213 (unchanged)
+
+================================================================================
+STEP 4 — Merge info_source
+================================================================================
+
+  ── MODULE [info_source] ── 941,909 rows x 12 cols
+    column                                 non‑null     pct      mean/uniq
+    ------------------------------------------------------------------------
+    deal_num                                941,909 100.00%               
+    num_Stock_Exchange                      941,909 100.00%               
+    num_Website                             941,909 100.00%               
+    num_Company_Press_Release               941,909 100.00%               
+    num_Electronic_Publication              941,909 100.00%               
+    num_Advisor_Submission                  941,909 100.00%               
+    num_Miscellaneous                       941,909 100.00%               
+    num_source_other                        941,909 100.00%               
+    num_source_total                        941,909 100.00%               
+    num_distinct_categories                 941,909 100.00%               
+    has_advisor_submission                  941,909 100.00%    mean=0.0940
+    has_info_source                         941,909 100.00%               
+  merged. rows=1,066,213 (unchanged)
+
+================================================================================
+STEP 6 — Post‑processing
+================================================================================
+  has_* 列 fillna(0) 前审计：
+    has_rumor_status             int64              0.1561
+    has_advisor_submission       float64            0.0940
+    has_info_source              float64            1.0000
+  fillna(0) 完成
+
+  has_any_multiple: 143,542 (13.46%)
+    参与计算 10 列；排除常量列 ['pre_cap_mul_ly']
+
+  rows=1,066,213 | unique deal_num=1,066,213
+  [OK] assertion passed: 一行一 deal
+
+================================================================================
+STEP 7 — SAMPLE MOMENTS (分母 = 全集)
+================================================================================
+  N (deals)                : 1,066,213
+  p_A (lead>=3d)            : 0.0693  (n=1,066,213)
+  p_A (仅 status)            : 0.1561  (n=1,066,213)
+  p_D (Completed*)          : 0.8171  (n=1,066,213)
+  p_D (仅 Completed)         : 0.6126  (n=1,066,213)
+
+  p_B (pre_rev_mul_ly)     : 0.1101 (n=117,407)
+  p_B (任意倍数, 宽口径)   : 0.1346 (n=143,542)
+
+  论文参照(仅供参考): p_A=0.2563 p_D=0.6568 p_B=0.2081
+
+================================================================================
+STEP 8 — 变量对账与最终覆盖率
+================================================================================
+
+  -- 变量对账：01 模块 → 02 输出（一一对应检查）--
+    [structure] 全部 56 个变量已出现在 02 输出
+    [multiple] 全部 21 个变量已出现在 02 输出
+    [value] 全部 19 个变量已出现在 02 输出
+    [info_source] 全部 11 个变量已出现在 02 输出
+  合计: 01 输入变量 107 | 02 输出列 master=110 + pairs=0
+
+  FINAL COVERAGE (分母 = 全集):
+  deal_status                   1,066,213   100.00%
+  announced_d                     897,698    84.19%
+  tar_primary_sic_code          -- NOT PRESENT --
+  tar_sic2                      -- NOT PRESENT --
+  tar_country_code              -- NOT PRESENT --
+  acq_country_code              -- NOT PRESENT --
+  pre_rev_mul_ly                  117,407    11.01%
+  has_any_multiple              1,066,213   100.00%
+  deal_val_usd                    394,126    36.97%
+  stake_acq_pct                   903,049    84.70%
+  n_targets                     -- NOT PRESENT --
+  reg_info_available            -- NOT PRESENT --
+  ven_name                      -- NOT PRESENT --
+  ven_name_overview             -- NOT PRESENT --
+
+  [OK] 无 _vendor_name 后缀残留列
+
+  [SAVED] D:\MA\data\merged\02_deal_master.csv
+    rows=1,066,213 | cols=110 | 424.1 MB
+
+  done in 106.2s

@@ -1,0 +1,266 @@
+
+======================================================================
+06_merge_comment_peer.py — v3
+======================================================================
+started: 2026-10-22 06:57:47
+  主键 = deal_num（单键；基表一行一 deal）
+  合并策略：左连接；列名冲突自动加后缀 _cmt / _vt
+
+======================================================================
+STEP 1 — 读取基表 05_deal_firm_filtered.csv
+======================================================================
+  基表读取完成：rows=226,249, cols=172
+  unique deal_num = 226,249
+
+======================================================================
+STEP 2 — 合并 comment 语调特征 01c_comments_features.csv
+======================================================================
+  comment源表：rows=1,065,301, unique deal_num=1,065,301
+  合并后：rows=226,249, cols=213
+
+======================================================================
+STEP 3 — 合并卖方类型 01b_deal_vendor_type.csv
+======================================================================
+  vendor源表：rows=530,985, unique deal_num=530,985
+  源表全部字段：['deal_num', 'ven_name', 'ven_bvd_id_num', 'vendor_type', 'vendor_type_source', 'matched_pattern']
+  合并后：rows=226,249, cols=218
+
+======================================================================
+STEP 4 — FINAL COVERAGE DIAGNOSTICS
+======================================================================
+  分母（总行数） = 226,249
+  column                                              non-null       pct     missing
+----------------------------------------------------------------------------------
+  deal_num                                             226,249   100.00%           0
+  deal_year                                            226,249   100.00%           0
+  deal_status                                          226,249   100.00%           0
+  tar_sic2                                             226,249   100.00%           0
+  tar_country_code                                     226,249   100.00%           0
+  acq_country_code                                     226,249   100.00%           0
+  rumor_jfe                                            226,249   100.00%           0
+  has_rumor_status                                     226,249   100.00%           0
+  completed_flag                                       226,249   100.00%           0
+  cross_border                                         226,249   100.00%           0
+  pre_rev_mul_ly                                        59,555    26.32%     166,694
+  pre_ebitda_mul_ly                                     24,754    10.94%     201,495
+  pre_ebit_mul_ly                                       29,506    13.04%     196,743
+  pre_pbt_mul_ly                                        36,645    16.20%     189,604
+  pre_pat_mul_ly                                        30,462    13.46%     195,787
+  pre_np_mul_ly                                          5,278     2.33%     220,971
+  pre_ta_mul_ly                                         66,114    29.22%     160,135
+  pre_na_mul_ly                                         11,096     4.90%     215,153
+  pre_cl_mul_ly                                         50,581    22.36%     175,668
+  pre_eq_mul_ly                                         55,420    24.50%     170,829
+  pre_cap_mul_ly                                        13,193     5.83%     213,056
+  deal_value                                           226,249   100.00%           0
+  stake_init_pct                                       226,249   100.00%           0
+  stake_acq_pct                                        189,278    83.66%      36,971
+  total_info_source                                    195,503    86.41%      30,746
+  pre_deal_tar_rev_rev_last_avail_yr                    80,911    35.76%     145,338
+  pre_deal_tar_ebitda_last_avail_yr                     38,732    17.12%     187,517
+  pre_deal_tar_ta_last_avail_yr                         83,973    37.12%     142,276
+  pre_deal_tar_eq_last_avail_yr                         81,650    36.09%     144,599
+  pre_deal_acq_rev_rev_last_avail_yr                   122,510    54.15%     103,739
+  pre_deal_acq_ta_last_avail_yr                        127,956    56.56%      98,293
+  post_deal_tar_rev_rev_1st_avail_yr                    84,478    37.34%     141,771
+  post_deal_tar_ebitda_1st_avail_yr                     35,065    15.50%     191,184
+  post_deal_acq_rev_rev_1st_avail_yr                   144,648    63.93%      81,601
+  post_deal_acq_ta_1st_avail_yr                        150,542    66.54%      75,707
+  tar_incorp_d_year                                    132,438    58.54%      93,811
+  acq_incorp_d_year                                    185,247    81.88%      41,002
+  tar_listed                                           223,103    98.61%       3,146
+  acq_listed                                           226,248   100.00%           1
+  ven_listed                                           125,813    55.61%     100,436
+  deal_pay_method                                      170,329    75.28%      55,920
+  expected_comp_d                                       14,654     6.48%     211,595
+  postponed_d                                               46     0.02%     226,203
+  deal_status_clean                                    226,249   100.00%           0
+  deal_struct_all                                       68,245    30.16%     158,004
+  deal_struct_n                                         68,245    30.16%     158,004
+  deal_fin_all                                          90,918    40.18%     135,331
+  deal_fin_n                                            90,918    40.18%     135,331
+  deal_type_all                                        226,249   100.00%           0
+  deal_type_n                                          226,249   100.00%           0
+  deal_pay_method_all                                  170,329    75.28%      55,920
+  deal_pay_method_n                                    170,329    75.28%      55,920
+  announced_d                                          226,249   100.00%           0
+  completed_d                                          147,015    64.98%      79,234
+  withdrawn_d                                            7,902     3.49%     218,347
+  assumed_comp_d                                        69,046    30.52%     157,203
+  rumour_d                                             226,249   100.00%           0
+  pay_has_cash                                         226,249   100.00%           0
+  pay_has_shares                                       226,249   100.00%           0
+  pay_has_debt                                         226,249   100.00%           0
+  pay_has_other                                        226,249   100.00%           0
+  pay_n_class                                          226,249   100.00%           0
+  pay_pure_cash                                        226,249   100.00%           0
+  pay_pure_shares                                      226,249   100.00%           0
+  pay_pure_debt                                        226,249   100.00%           0
+  pay_pure_other                                       226,249   100.00%           0
+  pay_mix                                              226,249   100.00%           0
+  pay_mix_cash_shares                                  226,249   100.00%           0
+  pay_mix_with_shares                                  226,249   100.00%           0
+  pay_mix_with_cash                                    226,249   100.00%           0
+  pay_mix_with_debt                                    226,249   100.00%           0
+  pay_class                                            226,249   100.00%           0
+  pay_unknown                                          226,249   100.00%           0
+  rumor_lead_days                                      226,203    99.98%          46
+  completed_strict                                     226,249   100.00%           0
+  DaysToCompletion                                     147,008    64.98%      79,241
+  ln_days                                              147,008    64.98%      79,241
+  deal_eq_val_usd                                       79,656    35.21%     146,593
+  deal_ent_val_usd                                      21,079     9.32%     205,170
+  deal_tar_val_tot_usd                                 189,213    83.63%      37,036
+  stake_final_pct                                      218,222    96.45%       8,027
+  deal_ccy                                             226,249   100.00%           0
+  num_Stock_Exchange                                   195,503    86.41%      30,746
+  num_Website                                          195,503    86.41%      30,746
+  num_Company_Press_Release                            195,503    86.41%      30,746
+  num_Electronic_Publication                           195,503    86.41%      30,746
+  num_Advisor_Submission                               195,503    86.41%      30,746
+  num_Miscellaneous                                    195,503    86.41%      30,746
+  num_source_other                                     195,503    86.41%      30,746
+  src_file                                             226,249   100.00%           0
+  pre_deal_tar_ebit_last_avail_yr                       59,623    26.35%     166,626
+  pre_deal_tar_pbt_last_avail_yr                        75,849    33.52%     150,400
+  pre_deal_tar_pat_last_avail_yr                        61,667    27.26%     164,582
+  pre_deal_tar_np_last_avail_yr                         10,592     4.68%     215,657
+  pre_deal_tar_na_last_avail_yr                         12,704     5.62%     213,545
+  pre_deal_tar_current_liabilities_last_avail_yr        66,118    29.22%     160,131
+  pre_deal_tar_cap                                      13,384     5.92%     212,865
+  pre_deal_acq_ebitda_last_avail_yr                     79,580    35.17%     146,669
+  pre_deal_acq_ebit_last_avail_yr                      113,454    50.15%     112,795
+  pre_deal_acq_pbt_last_avail_yr                       123,047    54.39%     103,202
+  pre_deal_acq_pat_last_avail_yr                       113,221    50.04%     113,028
+  pre_deal_acq_np_last_avail_yr                         53,971    23.85%     172,278
+  pre_deal_acq_na_last_avail_yr                         54,018    23.88%     172,231
+  pre_deal_acq_current_liabilities_last_avail_yr       117,485    51.93%     108,764
+  pre_deal_acq_eq_last_avail_yr                        127,530    56.37%      98,719
+  pre_deal_acq_cap                                      73,906    32.67%     152,343
+  tar_name                                             226,249   100.00%           0
+  tar_bvd_id_num                                       164,272    72.61%      61,977
+  tar_orbis_id_num                                     162,668    71.90%      63,581
+  acq_name                                             226,249   100.00%           0
+  acq_bvd_id_num                                       204,064    90.19%      22,185
+  acq_orbis_id_num                                     202,879    89.67%      23,370
+  ven_incorp_yr                                         71,364    31.54%     154,885
+  tar_ipo_d                                             21,114     9.33%     205,135
+  acq_ipo_d                                            118,668    52.45%     107,581
+  ven_ipo_d                                             30,925    13.67%     195,324
+  post_deal_tar_ebit_1st_avail_yr                       57,414    25.38%     168,835
+  post_deal_tar_pbt_1st_avail_yr                        75,198    33.24%     151,051
+  post_deal_tar_pat_1st_avail_yr                        57,384    25.36%     168,865
+  post_deal_tar_np_1st_avail_yr                          3,477     1.54%     222,772
+  post_deal_tar_ta_1st_avail_yr                         81,231    35.90%     145,018
+  post_deal_tar_na_1st_avail_yr                          3,592     1.59%     222,657
+  post_deal_tar_current_liabilities_1st_avail_yr        65,355    28.89%     160,894
+  post_deal_tar_shareholder_funds_1st_avail_yr          81,110    35.85%     145,139
+  post_deal_tar_mkt_cap_1st_avail_yr                     6,901     3.05%     219,348
+  post_deal_acq_ebitda_1st_avail_yr                     90,072    39.81%     136,177
+  post_deal_acq_ebit_1st_avail_yr                      129,107    57.06%      97,142
+  post_deal_acq_pbt_1st_avail_yr                       143,764    63.54%      82,485
+  post_deal_acq_pat_1st_avail_yr                       128,402    56.75%      97,847
+  post_deal_acq_np_1st_avail_yr                         54,223    23.97%     172,026
+  post_deal_acq_na_1st_avail_yr                         12,999     5.75%     213,250
+  post_deal_acq_shareholder_funds_1st_avail_yr         150,356    66.46%      75,893
+  post_deal_acq_mkt_cap_1st_avail_yr                    88,317    39.04%     137,932
+  tar_primary_sic_code                                 226,249   100.00%           0
+  acq_primary_sic_code                                 226,249   100.00%           0
+  regulatory_bodies                                     25,225    11.15%     201,024
+  regulatory_countries                                  25,225    11.15%     201,024
+  reg_body_count                                       226,249   100.00%           0
+  reg_country_count                                    226,249   100.00%           0
+  reg_antitrust                                        226,249   100.00%           0
+  reg_securities                                       226,249   100.00%           0
+  reg_state_assets                                     226,249   100.00%           0
+  reg_foreign_invest                                   226,249   100.00%           0
+  reg_financial                                        226,249   100.00%           0
+  reg_defense_tech                                     226,249   100.00%           0
+  reg_cross_national                                   226,249   100.00%           0
+  reg_common_law                                       226,249   100.00%           0
+  reg_civil_law                                        226,249   100.00%           0
+  reg_mixed_legal                                      226,249   100.00%           0
+  legal_origin_tar                                     223,408    98.74%       2,841
+  common_law_tar                                       223,408    98.74%       2,841
+  classification_distance_tar                          223,104    98.61%       3,145
+  legal_origin_acq                                     224,220    99.10%       2,029
+  common_law_acq                                       224,220    99.10%       2,029
+  classification_distance_acq                          223,915    98.97%       2,334
+  _row_id                                              226,249   100.00%           0
+  tar_sic4                                             226,249   100.00%           0
+  tar_sic3                                             226,249   100.00%           0
+  acq_sic4                                             226,249   100.00%           0
+  acq_sic3                                             226,249   100.00%           0
+  acq_sic2                                             226,249   100.00%           0
+  sic3_rolling_count                                   226,249   100.00%           0
+  sic2_rolling_count                                   226,249   100.00%           0
+  sic_benchmark_level                                  226,237    99.99%          12
+  tar_overview_wordcount                                     0     0.00%     226,249
+  text_pool_rolling_count                                    0     0.00%     226,249
+  stake_acq_pct_imputed                                 36,971    16.34%     189,278
+  stake_eff_pct                                        226,249   100.00%           0
+  cross_industry                                       226,249   100.00%           0
+  ln_deal_value                                        226,249   100.00%           0
+  tar_age                                              130,786    57.81%      95,463
+  acq_age                                              182,221    80.54%      44,028
+  lm_pos_count                                         226,199    99.98%          50
+  lm_neg_count                                         226,199    99.98%          50
+  lm_uncertain_count                                   226,199    99.98%          50
+  lm_litigious_count                                   226,199    99.98%          50
+  lm_strongmodal_count                                 226,199    99.98%          50
+  lm_weakmodal_count                                   226,199    99.98%          50
+  lm_constrain_count                                   226,199    99.98%          50
+  price_event_num                                      226,199    99.98%          50
+  rival_bidder_num                                     226,199    99.98%          50
+  reg_event_count                                      226,199    99.98%          50
+  comment_char_length                                  226,199    99.98%          50
+  comment_wordcount                                    226,199    99.98%          50
+  sentence_event_count                                 226,199    99.98%          50
+  has_lm_pos                                           226,199    99.98%          50
+  has_lm_neg                                           226,199    99.98%          50
+  has_lm_uncertain                                     226,199    99.98%          50
+  has_lm_litigious                                     226,199    99.98%          50
+  has_lm_strongmodal                                   226,199    99.98%          50
+  has_lm_weakmodal                                     226,199    99.98%          50
+  has_lm_constrain                                     226,199    99.98%          50
+  has_rumour                                           226,199    99.98%          50
+  has_target_reject                                    226,199    99.98%          50
+  has_unconditional_offer                              226,199    99.98%          50
+  has_deal_complete                                    226,199    99.98%          50
+  has_goshop                                           226,199    99.98%          50
+  has_phase2_investigation                             226,199    99.98%          50
+  has_reg_remedy                                       226,199    99.98%          50
+  has_debt_assumption                                  226,199    99.98%          50
+  num_unique_reg                                       226,199    99.98%          50
+  dt_first                                             217,480    96.12%       8,769
+  dt_last                                              217,480    96.12%       8,769
+  avg_premium_pct                                      226,199    99.98%          50
+  comment_n                                            226,199    99.98%          50
+  lm_pos_density                                       226,199    99.98%          50
+  lm_neg_density                                       226,199    99.98%          50
+  lm_uncertain_density                                 226,199    99.98%          50
+  lm_litigious_density                                 226,199    99.98%          50
+  lm_strongmodal_density                               226,199    99.98%          50
+  lm_weakmodal_density                                 226,199    99.98%          50
+  lm_constrain_density                                 226,199    99.98%          50
+  total_timeline_days                                  151,878    67.13%      74,371
+  ven_name                                             126,749    56.02%      99,500
+  ven_bvd_id_num                                        93,952    41.53%     132,297
+  vendor_type                                          126,749    56.02%      99,500
+  vendor_type_source                                   126,749    56.02%      99,500
+  matched_pattern                                      103,924    45.93%     122,325
+
+----------------------------------------------------------------------------------
+  rows=226,249 | unique deal_num=226,249
+  [OK] 一行一 deal
+  列构成: 共 218 列 | 类别 38 | 数值 180 | 主键 1
+
+======================================================================
+STEP 5 — Save
+======================================================================
+  [SAVED] D:\MA\data\merged\06a_merge_comment_vendor.csv
+    rows=226,249 | cols=218 | 233.6 MB
+    unique deal_num = 226,249 (== rows)
+  [SAVED] D:\MA\data\merged\06a_merge_comment_vendor_steps.csv
+
+  done in 58s

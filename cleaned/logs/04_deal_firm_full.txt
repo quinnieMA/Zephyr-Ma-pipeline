@@ -1,0 +1,261 @@
+
+====================================================================================
+04_merge_firm_to_deal.py — v11（COLS_TO_SAVE 驱动 + 02/03 职责重划适配）
+====================================================================================
+started: 2026-10-22 05:42:06
+  主键 = deal_num（单键；两表均一行一 deal）
+  白名单 = 论文 COLS_TO_SAVE；03 财务列 rename 成论文名
+  严格白名单 = True
+
+  [REBALANCE] 26 列从 MASTER_KEEP 挪到 FIRM_KEEP:
+      - tar_sic2
+      - legal_origin_tar
+      - legal_origin_acq
+      - reg_body_count
+      - reg_country_count
+      - reg_antitrust
+      - reg_securities
+      - reg_state_assets
+      - reg_foreign_invest
+      - reg_financial
+      - reg_defense_tech
+      - reg_cross_national
+      - reg_common_law
+      - reg_civil_law
+      - reg_mixed_legal
+      - regulatory_bodies
+      - regulatory_countries
+      - cross_border
+      - tar_country_code
+      - acq_country_code
+      - common_law_tar
+      - common_law_acq
+      - classification_distance_tar
+      - classification_distance_acq
+      - tar_primary_sic_code
+      - acq_primary_sic_code
+
+====================================================================================
+STEP 0 — 白名单核对
+====================================================================================
+
+  ── 白名单核对 [02_deal_master] ──
+    02_deal_master.csv | 文件列 110
+    白名单 70 -> 命中 69 | 未命中 1
+
+    [WARN] 以下 1 列在文件中不存在：
+        - rumor_lead_yr
+
+    [RENAME] 将执行 2 处字段名对齐：
+        num_source_total                           -> total_info_source
+        deal_val_usd                               -> deal_value
+
+  ── 白名单核对 [03_firm_deal_level] ──
+    03_firm_deal_level.csv | 文件列 159
+    白名单 87 -> 命中 86 | 未命中 1
+
+    [WARN] 以下 1 列在文件中不存在：
+        - tar_key
+
+    [RENAME] 将执行 45 处字段名对齐：
+        pre_tar_rev_ly                             -> pre_deal_tar_rev_rev_last_avail_yr
+        pre_tar_ebitda_ly                          -> pre_deal_tar_ebitda_last_avail_yr
+        pre_tar_ebit_ly                            -> pre_deal_tar_ebit_last_avail_yr
+        pre_tar_pbt_ly                             -> pre_deal_tar_pbt_last_avail_yr
+        pre_tar_pat_ly                             -> pre_deal_tar_pat_last_avail_yr
+        pre_tar_np_ly                              -> pre_deal_tar_np_last_avail_yr
+        pre_tar_ta_ly                              -> pre_deal_tar_ta_last_avail_yr
+        pre_tar_na_ly                              -> pre_deal_tar_na_last_avail_yr
+        pre_tar_eq_ly                              -> pre_deal_tar_eq_last_avail_yr
+        pre_tar_cl_ly                              -> pre_deal_tar_current_liabilities_last_avail_yr
+        pre_tar_cap_ly                             -> pre_deal_tar_cap
+        pre_acq_rev_ly                             -> pre_deal_acq_rev_rev_last_avail_yr
+        pre_acq_ebitda_ly                          -> pre_deal_acq_ebitda_last_avail_yr
+        pre_acq_pat_ly                             -> pre_deal_acq_pat_last_avail_yr
+        pre_acq_ta_ly                              -> pre_deal_acq_ta_last_avail_yr
+        pre_acq_eq_ly                              -> pre_deal_acq_eq_last_avail_yr
+        pre_acq_ebit_ly                            -> pre_deal_acq_ebit_last_avail_yr
+        pre_acq_pbt_ly                             -> pre_deal_acq_pbt_last_avail_yr
+        pre_acq_np_ly                              -> pre_deal_acq_np_last_avail_yr
+        pre_acq_na_ly                              -> pre_deal_acq_na_last_avail_yr
+        pre_acq_cl_ly                              -> pre_deal_acq_current_liabilities_last_avail_yr
+        pre_acq_cap_ly                             -> pre_deal_acq_cap
+        post_tar_op_rev_1st_avail_yr               -> post_deal_tar_rev_rev_1st_avail_yr
+        post_tar_ebitda_1st_avail_yr               -> post_deal_tar_ebitda_1st_avail_yr
+        post_tar_ebit_1st_avail_yr                 -> post_deal_tar_ebit_1st_avail_yr
+        post_tar_pft_before_tax_1st_avail_yr       -> post_deal_tar_pbt_1st_avail_yr
+        post_tar_pft_after_tax_1st_avail_yr        -> post_deal_tar_pat_1st_avail_yr
+        post_tar_net_pft_1st_avail_yr              -> post_deal_tar_np_1st_avail_yr
+        post_tar_tot_assets_1st_avail_yr           -> post_deal_tar_ta_1st_avail_yr
+        post_tar_net_assets_1st_avail_yr           -> post_deal_tar_na_1st_avail_yr
+        post_tar_cur_liab_1st_avail_yr             -> post_deal_tar_current_liabilities_1st_avail_yr
+        post_tar_sh_funds_1st_avail_yr             -> post_deal_tar_shareholder_funds_1st_avail_yr
+        post_tar_mkt_cap_1st_avail_yr              -> post_deal_tar_mkt_cap_1st_avail_yr
+        post_acq_op_rev_1st_avail_yr               -> post_deal_acq_rev_rev_1st_avail_yr
+        post_acq_ebitda_1st_avail_yr               -> post_deal_acq_ebitda_1st_avail_yr
+        post_acq_ebit_1st_avail_yr                 -> post_deal_acq_ebit_1st_avail_yr
+        post_acq_pft_before_tax_1st_avail_yr       -> post_deal_acq_pbt_1st_avail_yr
+        post_acq_pft_after_tax_1st_avail_yr        -> post_deal_acq_pat_1st_avail_yr
+        post_acq_net_pft_1st_avail_yr              -> post_deal_acq_np_1st_avail_yr
+        post_acq_tot_assets_1st_avail_yr           -> post_deal_acq_ta_1st_avail_yr
+        post_acq_net_assets_1st_avail_yr           -> post_deal_acq_na_1st_avail_yr
+        post_acq_sh_funds_1st_avail_yr             -> post_deal_acq_shareholder_funds_1st_avail_yr
+        post_acq_mkt_cap_1st_avail_yr              -> post_deal_acq_mkt_cap_1st_avail_yr
+        tar_incorp_yr                              -> tar_incorp_d_year
+        acq_incorp_yr                              -> acq_incorp_d_year
+
+====================================================================================
+STEP 0b — COLS_TO_SAVE 中不在 02/03 的变量（分组）
+====================================================================================
+
+  A) 需外部模块/数据并入（37 个）：
+     - advisor 28 列 (Module J 手工) + tar/acq_total_advisor
+     - post_rev/ebitda/ebit_mul_fy (post 倍数，02待提供)
+     - pre_deal_ven_* (vendor 财务，03 无 vendor 财务模块)
+     - stock_traded_gdp_tar/acq (宏观外部数据)
+
+  B) 需派生（07/08 做，45 个）：
+     - tar_sic3 / acq_sic3        <- tar(acq)_primary_sic_code
+     - ln_mul_* / ln_text_* / ln_sic_*
+     - ln_deal_value / ln_tar_size / ln_rel_size / ln_tar_post_size
+     - tar_ebitda_margin / tar_leverage / tar_roa / tar_rev_growth
+     - tar_post_* / acq_roa / target_age / acquirer_age
+     - cross_industry_alt / national_class / sic_coverage_rate
+     - acq_tar_similarity / ind_text_diversity(_w)
+     - tar_ta_for_t6 / tar_rev_for_t6 / tar_mktcap_for_t6
+       / tar_ev_for_t6 / tar_mb_for_t6
+
+  C) 命名不同 —— 已在本脚本 rename，见上方 [RENAME]
+
+====================================================================================
+STEP 1 — 加载 + rename
+====================================================================================
+
+  [LOAD] 02_deal_master : usecols=69
+    [02] rename 执行 2 处
+    [CATEGORY] 17 列: 795 MB -> 46 MB (省 749 MB)
+    1,066,213 rows x 69 cols | unique deal_num: 1,066,213 | mem=200 MB (降精度 51)
+
+  [LOAD] 03_firm_deal_level : usecols=86
+    [03] rename 执行 45 处
+    [CATEGORY] 14 列: 715 MB -> 261 MB (省 454 MB)
+    1,066,782 rows x 86 cols | unique deal_num: 1,066,782 | mem=558 MB (降精度 71)
+
+====================================================================================
+STEP 2 — 键检查（不填充 / 不 dedup）
+====================================================================================
+  [master] deal_num: NaN=0 | 重复=0 | unique=1,066,213
+  [firm] deal_num: NaN=0 | 重复=0 | unique=1,066,782
+
+  base 行数 = 1,066,213（合并后必须不变）
+
+====================================================================================
+STEP 3 — 列名冲突（先报告）
+====================================================================================
+
+  无同名列
+
+  将并入 85 个新列
+
+====================================================================================
+STEP 4 — 左连接（deal_num 单键）
+====================================================================================
+  base=1,066,213 + firm=1,066,782
+  合并后 = 1,066,213 | mem=750 MB
+  [OK] 行数不变（validate='one_to_one' 已硬校验）
+
+====================================================================================
+STEP 5 — 匹配率
+====================================================================================
+  02 deals     : 1,066,213
+  03 deals     : 1,066,782
+  交集（命中） : 1,066,213 (100.00%)
+  02 有 03 无  : 0 (0.00%)  <- 无财务数据，保留 NaN
+  03 有 02 无  : 569  <- 不在全集，左连接丢弃
+
+====================================================================================
+STEP 5c — 实体一致性审计（02 主行 vs 03 主行）
+====================================================================================
+  读取列: deal_num + tar_bvd_id_num / tar_name / acq_bvd_id_num / acq_name
+  [02] 实体键列可用 1 个: ['deal_num']
+  [03] 实体键列可用 5 个: ['deal_num', 'tar_bvd_id_num', 'tar_name', 'acq_bvd_id_num', 'acq_name']
+  重叠 deal: 1,066,213
+  tar_bvd_id_num    : 一方缺列，跳过
+  tar_name          : 一方缺列，跳过
+  acq_bvd_id_num    : 一方缺列，跳过
+  acq_name          : 一方缺列，跳过
+  [OK] 未发现 02/03 主行实体键冲突
+
+====================================================================================
+STEP 5b — 低成本派生
+====================================================================================
+
+    [DERIVE] 生成 2 列：
+        _row_id
+        deal_year <- announced_d
+
+====================================================================================
+STEP 6 — FINAL COVERAGE（论文变量名）
+====================================================================================
+
+  覆盖率（分母 = 1,066,213）
+    column                                           non-null       pct      missing
+    --------------------------------------------------------------------------------
+    deal_num                                        1,066,213   100.00%            0
+    deal_year                                         897,698    84.19%      168,515
+    deal_status                                     1,066,213   100.00%            0
+    tar_sic2                                          956,147    89.68%      110,066
+    tar_country_code                                1,001,156    93.90%       65,057
+    acq_country_code                                  908,226    85.18%      157,987
+    rumor_jfe                                       1,066,213   100.00%            0
+    has_rumor_status                                1,066,213   100.00%            0
+    completed_flag                                  1,066,213   100.00%            0
+    cross_border                                      899,920    84.40%      166,293
+    pre_rev_mul_ly                                    117,407    11.01%      948,806
+    pre_ebitda_mul_ly                                  46,829     4.39%    1,019,384
+    pre_ebit_mul_ly                                    59,559     5.59%    1,006,654
+    pre_pbt_mul_ly                                     72,129     6.76%      994,084
+    pre_pat_mul_ly                                     61,787     5.79%    1,004,426
+    pre_np_mul_ly                                      12,145     1.14%    1,054,068
+    pre_ta_mul_ly                                     132,366    12.41%      933,847
+    pre_na_mul_ly                                      23,118     2.17%    1,043,095
+    pre_cl_mul_ly                                     102,471     9.61%      963,742
+    pre_eq_mul_ly                                     109,673    10.29%      956,540
+    pre_cap_mul_ly                                     33,363     3.13%    1,032,850
+    deal_value                                        394,126    36.97%      672,087
+    stake_init_pct                                  1,018,117    95.49%       48,096
+    stake_acq_pct                                     903,049    84.70%      163,164
+    total_info_source                                 941,403    88.29%      124,810
+    pre_deal_tar_rev_rev_last_avail_yr                333,368    31.27%      732,845
+    pre_deal_tar_ebitda_last_avail_yr                 191,963    18.00%      874,250
+    pre_deal_tar_ta_last_avail_yr                     360,450    33.81%      705,763
+    pre_deal_tar_eq_last_avail_yr                     354,833    33.28%      711,380
+    pre_deal_acq_rev_rev_last_avail_yr                443,046    41.55%      623,167
+    pre_deal_acq_ta_last_avail_yr                     459,941    43.14%      606,272
+    post_deal_tar_rev_rev_1st_avail_yr                363,937    34.13%      702,276
+    post_deal_tar_ebitda_1st_avail_yr                 171,615    16.10%      894,598
+    post_deal_acq_rev_rev_1st_avail_yr                569,970    53.46%      496,243
+    post_deal_acq_ta_1st_avail_yr                     550,547    51.64%      515,666
+    tar_incorp_d_year                                 601,449    56.41%      464,764
+    acq_incorp_d_year                                 752,796    70.60%      313,417
+    tar_listed                                      1,005,483    94.30%       60,730
+    acq_listed                                        997,676    93.57%       68,537
+    ven_listed                                        528,983    49.61%      537,230
+    tar_ipo_d                                          68,209     6.40%      998,004
+    acq_ipo_d                                         313,535    29.41%      752,678
+    ven_ipo_d                                         100,798     9.45%      965,415
+    classification_distance_tar                       988,257    92.69%       77,956
+    classification_distance_acq                       900,580    84.47%      165,633
+
+  rows=1,066,213 | unique deal_num=1,066,213
+  [OK] 一行一 deal
+
+  列构成: 共 156 列 | category 31 | 数值 124 | 键 1
+
+====================================================================================
+STEP 7 — Save
+====================================================================================
+  [SAVED] D:\MA\data\merged\04_deal_firm_full.csv
+    rows=1,066,213 | cols=156 | 654.2 MB
+
+  done in 571.0s

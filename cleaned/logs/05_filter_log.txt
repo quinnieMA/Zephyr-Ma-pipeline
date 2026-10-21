@@ -1,0 +1,130 @@
+
+==============================================================================
+05_sample_filter.py — v7
+==============================================================================
+input : D:\MA\data\merged\04_deal_firm_full.csv
+period: 1997-2025   year from announced_d
+outcome: completed_strict（主） / completed_flag（对比）
+
+==============================================================================
+STEP 1 — Load
+==============================================================================
+Rows: 1,066,213 | Columns: 156
+_row_id check PASSED: 0 .. 1066212
+deal_num: 1,066,213 unique / 1,066,213 rows
+
+==============================================================================
+STEP 2 — Pre-filter variable preparation [full dataset]
+==============================================================================
+deal_year = announced_d 优先，回退 completed_d   [修复口径]
+  from announced_d 897,698 | fallback completed_d 2
+  non-null 897,700 | still NaN 168,513
+tar_sic3 non-null: 956,147  acq_sic3 non-null: 903,395
+
+Computing SIC rolling peer counts...
+  sic_benchmark_level=3: 845,949  =2: 371
+
+==============================================================================
+[UNAVAILABLE] tar_overview not in 04
+==============================================================================
+  tar_overview_wordcount / text_pool_rolling_count 无法计算。
+  需用时：在 04 的 FORCE_KEEP_MASTER 加 'tar_overview' 后重跑 04。
+
+==============================================================================
+STEP 2.5 — Listed-status diagnostics (BEFORE filters)
+==============================================================================
+
+acq_listed distribution (input N=1,066,213):
+    0.0       :  638,803  ( 59.9%)
+    1.0       :  358,873  ( 33.7%)
+    nan       :   68,537  (  6.4%)
+
+tar_listed distribution (input N=1,066,213):
+    0.0       :  919,951  ( 86.3%)
+    1.0       :   85,532  (  8.0%)
+    nan       :   60,730  (  5.7%)
+
+Cross-tab acq_listed (rows) x tar_listed (cols):
+tar_listed     0.0    1.0    NaN        All
+acq_listed                                 
+0.0         563600  45405  29798   638803.0
+1.0         296490  31689  30694   358873.0
+NaN          59861   8438    238        NaN
+All         919951  85532      0  1066213.0
+
+  >>> KEY SHARES (denominator = input N=1,066,213) <<<
+    Listed acquirer  (acq_listed=1) :  358,873   33.7%
+    Unlisted target  (tar_listed=0) :  919,951   86.3%
+    Listed acq AND unlisted tar     :  296,490   27.8%
+    [both known N=937,184] unlisted tar  98.2% | listed acq+unlisted tar  31.6%
+
+==============================================================================
+STEP 3 — Sequential filters
+==============================================================================
+
+Input: 1,066,213 rows
+      [start] p_A=0.0693  pD_strict=0.6126  pD_wide=0.8171  p_B=0.1101
+
+  [SOURCE] deal_type 使用列 = 'deal_type_all'  (建议 04 白名单补 'deal_type')
+  F4 (sample period 1997-2025, year from announced_d)
+      dropped  195,721  ->   870,492 remaining
+      [after F4] p_A=0.0829  pD_strict=0.7301  pD_wide=0.9775  p_B=0.1103
+      stake 缺失 100,494；从 deal_type_all 插补成功 69,594
+  F6 (stake >= 50.0%, impute if missing)
+      dropped  101,286  ->   769,206 remaining
+      [after F6] p_A=0.0789  pD_strict=0.7328  pD_wide=0.9783  p_B=0.0919
+  F7 (deal_value >= 1000.0 th USD = USD 1M)
+      dropped  528,104  ->   241,102 remaining
+      [after F7] p_A=0.1477  pD_strict=0.6509  pD_wide=0.9557  p_B=0.2587
+  F8 (tar/acq SIC3 & country all available)
+      dropped   14,853  ->   226,249 remaining
+      [after F8] p_A=0.1467  pD_strict=0.6498  pD_wide=0.9552  p_B=0.2632
+
+==============================================================================
+STEP 4 — Post-filter variable construction
+==============================================================================
+cross_industry =1: 143,996  (NaN 0)
+ln_deal_value non-null: 226,249
+cross_border 重算：与 04 原有值不一致 0 行  (0 = 完全一致)
+cross_border  =1: 62,160
+tar_age non-null: 130,786  acq_age non-null: 182,221
+
+Payment method distribution:
+  cash      N= 86,600  38.3%
+  shares    N= 18,842   8.3%
+  debt      N=  7,518   3.3%
+  other     N=  6,012   2.7%
+  mix       N= 51,357  22.7%
+  unknown   N= 55,920  24.7%
+
+==============================================================================
+STEP 5 — Save
+==============================================================================
+Saved -> D:\MA\data\merged\05_deal_firm_filtered.csv
+  rows=226,249 | cols=172 | unique deal_num=226,249
+Steps CSV -> D:\MA\data\merged\05_filter_steps.csv
+
+==============================================================================
+FINAL — 结果变量变异
+==============================================================================
+  column                    mean       N(1)       N(0)
+  ----------------------------------------------------
+  completed_strict        0.6498    147,015     79,234
+  completed_flag          0.9552    216,121     10,128
+      [!!] 几乎无变异，不宜作结果变量
+  rumor_jfe               0.1467     33,192    193,057
+
+  论文参照 p_D = 0.6568
+
+==============================================================================
+FILTER LOG SUMMARY
+==============================================================================
+Input : 04_deal_firm_full.csv  1,066,213 rows
+Year  : announced_d 优先, period 1997-2025
+
+F4 (sample period 1997-2025, year from announced_d) : dropped 195,721  -> 870,492 left  (cum 195,721)
+F6 (stake >= 50.0%, impute if missing)              : dropped 101,286  -> 769,206 left  (cum 297,007)
+F7 (deal_value >= 1000.0 th USD = USD 1M)           : dropped 528,104  -> 241,102 left  (cum 825,111)
+F8 (tar/acq SIC3 & country all available)           : dropped  14,853  -> 226,249 left  (cum 839,964)
+
+Final sample : 226,249 rows | 226,249 unique deals

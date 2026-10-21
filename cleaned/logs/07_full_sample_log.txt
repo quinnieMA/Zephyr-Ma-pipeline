@@ -1,0 +1,625 @@
+
+==============================================================================
+07_full_sample.py — v6
+==============================================================================
+started : 2026-10-22 07:00:02
+主键    : deal_num
+06a     : D:\MA\data\merged\06a_merge_comment_vendor.csv
+06b     : D:\MA\data\merged\06b_text_peer.csv
+日志文件: D:\MA\data\merged\07_full_sample_log.txt
+倍数策略: 保留 _x(06a 原始) 与 _y(06b 缩尾) 全部倍数列，均缩尾，均进白名单
+
+==============================================================================
+STEP 1 — 载入 06a
+==============================================================================
+  rows=226,249  cols=218  unique_deal=226,249
+  vendor 相关列(10): ['ven_incorp_yr', 'ven_listed', 'ven_ipo_d', 'price_event_num', 'reg_event_count', 'sentence_event_count', 'ven_name', 'ven_bvd_id_num', 'vendor_type', 'vendor_type_source']
+
+==============================================================================
+STEP 2 — 载入 06b（仅剔除日期列 + deal_num 聚合）
+==============================================================================
+  [剔除] 日期列(2): ['deal_date', 'deal_year']
+  rows=100,280  peer_cols=['pre_rev_mul_ly', 'pre_ebitda_mul_ly', 'pre_ebit_mul_ly', 'pre_pbt_mul_ly', 'pre_ta_mul_ly', 'pre_eq_mul_ly', 'text_peer_sim_mean', 'n_peers_rev', 'n_peers_ebitda', 'n_peers_ebit', 'n_peers_pbt', 'n_peers_ta', 'n_peers_eq', 'bench_rev', 'bench_ebitda', 'bench_ebit', 'bench_pbt', 'bench_ta', 'bench_eq']
+
+==============================================================================
+STEP 3 — 左连接 06a + 06b（保留 _x/_y 双列）
+==============================================================================
+  merged: 226,249 rows x 237 cols
+  [INFO] 保留重名列: _x=6 个（06a 原始倍数，未缩尾），_y=6 个（06b 已缩尾）
+         _x: ['pre_ebit_mul_ly_x', 'pre_ebitda_mul_ly_x', 'pre_eq_mul_ly_x', 'pre_pbt_mul_ly_x', 'pre_rev_mul_ly_x', 'pre_ta_mul_ly_x']
+         _y: ['pre_ebit_mul_ly_y', 'pre_ebitda_mul_ly_y', 'pre_eq_mul_ly_y', 'pre_pbt_mul_ly_y', 'pre_rev_mul_ly_y', 'pre_ta_mul_ly_y']
+    [WARN] pre_rev_mul_ly             未并入
+    [WARN] pre_ebitda_mul_ly          未并入
+    [WARN] pre_ebit_mul_ly            未并入
+    [WARN] pre_pbt_mul_ly             未并入
+    [WARN] pre_ta_mul_ly              未并入
+    [WARN] pre_eq_mul_ly              未并入
+    text_peer_sim_mean         non-null=99,818 (44.1%)
+    n_peers_rev                non-null=99,818 (44.1%)
+    n_peers_ebitda             non-null=99,818 (44.1%)
+    n_peers_ebit               non-null=99,818 (44.1%)
+    n_peers_pbt                non-null=99,818 (44.1%)
+    n_peers_ta                 non-null=99,818 (44.1%)
+    n_peers_eq                 non-null=99,818 (44.1%)
+    bench_rev                  non-null=62,687 (27.7%)
+    bench_ebitda               non-null=25,761 (11.4%)
+    bench_ebit                 non-null=31,878 (14.1%)
+    bench_pbt                  non-null=39,412 (17.4%)
+    bench_ta                   non-null=70,569 (31.2%)
+    bench_eq                   non-null=60,888 (26.9%)
+
+==============================================================================
+STEP 4 — 倍数处理（_x / _y 均不缩尾，原样保留）
+==============================================================================
+  识别到倍数列(17): ['pre_cap_mul_ly', 'pre_cl_mul_ly', 'pre_ebit_mul_ly_x', 'pre_ebit_mul_ly_y', 'pre_ebitda_mul_ly_x', 'pre_ebitda_mul_ly_y', 'pre_eq_mul_ly_x', 'pre_eq_mul_ly_y', 'pre_na_mul_ly', 'pre_np_mul_ly', 'pre_pat_mul_ly', 'pre_pbt_mul_ly_x', 'pre_pbt_mul_ly_y', 'pre_rev_mul_ly_x', 'pre_rev_mul_ly_y', 'pre_ta_mul_ly_x', 'pre_ta_mul_ly_y']
+  处理规则: _x(06a 原始) 与 _y(06b) 均不缩尾，原样保留
+  缩尾参数 [0.05,0.95] 本次不使用，留待后续手动处理
+    [keep] pre_cap_mul_ly               无后缀 = 06b 产出（不缩尾）      n=13,193 (5.8%)  p1=0.000 p5=0.000 p50=0.000 p95=0.000 p99=0.000 max=0.000 mean=0.000
+    [keep] pre_cl_mul_ly                无后缀 = 06b 产出（不缩尾）      n=50,581 (22.4%)  p1=0.090 p5=0.360 p50=5.330 p95=274.140 p99=8825.230 max=75000000.000 mean=4934.545
+    [keep] pre_ebit_mul_ly_x            _x = 06a 原始（不缩尾）       n=29,506 (13.0%)  p1=0.591 p5=2.280 p50=14.735 p95=282.370 p99=3492.390 max=187397520.000 mean=13469.128
+    [keep] pre_ebit_mul_ly_y            _y = 06b（不缩尾）          n=22,774 (10.1%)  p1=0.480 p5=2.110 p50=14.555 p95=217.349 p99=2251.358 max=2263.897 mean=71.205
+    [keep] pre_ebitda_mul_ly_x          _x = 06a 原始（不缩尾）       n=24,754 (10.9%)  p1=0.540 p5=2.047 p50=11.005 p95=160.911 p99=1591.728 max=187397520.000 mean=8444.925
+    [keep] pre_ebitda_mul_ly_y          _y = 06b（不缩尾）          n=19,282 (8.5%)  p1=0.460 p5=1.910 p50=10.980 p95=128.875 p99=1065.047 max=1067.337 mean=40.320
+    [keep] pre_eq_mul_ly_x              _x = 06a 原始（不缩尾）       n=55,420 (24.5%)  p1=0.120 p5=0.500 p50=2.810 p95=72.322 p99=7705.765 max=920105900.000 mean=171915.984
+    [keep] pre_eq_mul_ly_y              _y = 06b（不缩尾）          n=40,822 (18.0%)  p1=0.090 p5=0.430 p50=2.390 p95=33.448 p99=531.258 max=532.018 mean=13.590
+    [keep] pre_na_mul_ly                无后缀 = 06b 产出（不缩尾）      n=11,096 (4.9%)  p1=0.080 p5=0.380 p50=2.280 p95=21.742 p99=129.391 max=282803.970 mean=50.340
+    [keep] pre_np_mul_ly                无后缀 = 06b 产出（不缩尾）      n=5,278 (2.3%)  p1=0.478 p5=3.640 p50=25.545 p95=239.308 p99=1728.928 max=397204.100 mean=287.896
+    [keep] pre_pat_mul_ly               无后缀 = 06b 产出（不缩尾）      n=30,462 (13.5%)  p1=0.640 p5=2.980 p50=20.350 p95=430.769 p99=4585.211 max=187397520.000 mean=8115.656
+    [keep] pre_pbt_mul_ly_x             _x = 06a 原始（不缩尾）       n=36,645 (16.2%)  p1=0.594 p5=2.440 p50=16.160 p95=353.158 p99=4214.500 max=187397520.000 mean=10120.404
+    [keep] pre_pbt_mul_ly_y             _y = 06b（不缩尾）          n=28,104 (12.4%)  p1=0.541 p5=2.350 p50=15.930 p95=266.502 p99=2548.069 max=2548.636 mean=82.950
+    [keep] pre_rev_mul_ly_x             _x = 06a 原始（不缩尾）       n=59,555 (26.3%)  p1=0.050 p5=0.160 p50=1.970 p95=172.767 p99=5263.653 max=642738800.000 mean=63228.655
+    [keep] pre_rev_mul_ly_y             _y = 06b（不缩尾）          n=42,459 (18.8%)  p1=0.040 p5=0.140 p50=1.780 p95=110.194 p99=3395.789 max=3403.728 mean=65.131
+    [keep] pre_ta_mul_ly_x              _x = 06a 原始（不缩尾）       n=66,114 (29.2%)  p1=0.030 p5=0.140 p50=1.270 p95=23.343 p99=2757.129 max=920105900.000 mean=188196.100
+    [keep] pre_ta_mul_ly_y              _y = 06b（不缩尾）          n=46,976 (20.8%)  p1=0.030 p5=0.120 p50=1.080 p95=11.220 p99=186.214 max=186.285 mean=4.770
+
+  --- ln 倍数 ---
+    ln_rev_x               src=pre_rev_mul_ly_x         06a原始    valid=59,555 (26.3%)  mean=1.013 sd=2.215
+    ln_rev_y               src=pre_rev_mul_ly_y         06b      valid=42,459 (18.8%)  mean=0.828 sd=2.014
+    ln_ebitda_x            src=pre_ebitda_mul_ly_x      06a原始    valid=24,744 (10.9%)  mean=2.576 sd=1.419
+    ln_ebitda_y            src=pre_ebitda_mul_ly_y      06b      valid=19,282 (8.5%)  mean=2.522 sd=1.273
+    ln_ebit_x              src=pre_ebit_mul_ly_x        06a原始    valid=29,497 (13.0%)  mean=2.887 sd=1.559
+    ln_ebit_y              src=pre_ebit_mul_ly_y        06b      valid=22,774 (10.1%)  mean=2.818 sd=1.399
+    ln_pbt_x               src=pre_pbt_mul_ly_x         06a原始    valid=36,633 (16.2%)  mean=3.001 sd=1.608
+    ln_pbt_y               src=pre_pbt_mul_ly_y         06b      valid=28,104 (12.4%)  mean=2.938 sd=1.425
+    ln_ta_x                src=pre_ta_mul_ly_x          06a原始    valid=65,997 (29.2%)  mean=0.448 sd=1.941
+    ln_ta_y                src=pre_ta_mul_ly_y          06b      valid=46,976 (20.8%)  mean=0.117 sd=1.405
+    ln_eq_x                src=pre_eq_mul_ly_x          06a原始    valid=55,369 (24.5%)  mean=1.348 sd=1.931
+    ln_eq_y                src=pre_eq_mul_ly_y          06b      valid=40,822 (18.0%)  mean=1.044 sd=1.383
+    ln_pat                 src=pre_pat_mul_ly           无后缀      valid=30,450 (13.5%)  mean=3.219 sd=1.607
+    ln_np                  src=pre_np_mul_ly            无后缀      valid=5,278 (2.3%)  mean=3.294 sd=1.397
+    ln_na                  src=pre_na_mul_ly            无后缀      valid=11,079 (4.9%)  mean=0.907 sd=1.308
+    ln_cl                  src=pre_cl_mul_ly            无后缀      valid=50,559 (22.3%)  mean=1.885 sd=2.103
+    ln_cap                 src=pre_cap_mul_ly           无后缀      valid=0 (0.0%)  mean=nan sd=nan
+    [MISS] 事后营收倍数           源列 post_rev_mul_fy_x/post_rev_mul_fy_y 均缺失（也无无后缀列）
+    [MISS] 事后EBITDA倍数       源列 post_ebitda_mul_fy_x/post_ebitda_mul_fy_y 均缺失（也无无后缀列）
+    [MISS] 事后EBIT倍数         源列 post_ebit_mul_fy_x/post_ebit_mul_fy_y 均缺失（也无无后缀列）
+    ln_text_rev            src=bench_rev                无后缀      valid=62,687 (27.7%)  mean=0.713 sd=1.392
+    ln_text_ebitda         src=bench_ebitda             无后缀      valid=25,761 (11.4%)  mean=2.439 sd=0.806
+    ln_text_ebit           src=bench_ebit               无后缀      valid=31,878 (14.1%)  mean=2.773 sd=0.870
+    ln_text_pbt            src=bench_pbt                无后缀      valid=39,412 (17.4%)  mean=2.921 sd=0.921
+    ln_text_ta             src=bench_ta                 无后缀      valid=70,569 (31.2%)  mean=0.132 sd=0.852
+    ln_text_eq             src=bench_eq                 无后缀      valid=60,888 (26.9%)  mean=1.057 sd=0.834
+
+==============================================================================
+STEP 5 — 财务比率 & 规模变量
+==============================================================================
+    [MISS] tar_rev_growth: 缺 tar_rev_rev_yr__1
+    [MISS] post_deal_tar_eq_1st_avail_yr -> 全 NaN
+    [winsor] tar_ebitda_margin        before min=-9374256.406 p1=-53.000 p50=0.076 p99=0.920 max=1036234.961
+             after  min=-2.297 p1=-2.297 p50=0.076 p99=0.599 max=0.599
+    [winsor] tar_leverage             before min=-791.245 p1=0.000 p50=0.598 p99=4.285 max=1143331.993
+             after  min=0.019 p1=0.019 p50=0.598 p99=1.256 max=1.256
+    [winsor] tar_rev_growth           before min=nan p1=nan p50=nan p99=nan max=nan
+             after  min=nan p1=nan p50=nan p99=nan max=nan
+    [winsor] tar_roa                  before min=-212818.995 p1=-2.367 p50=0.014 p99=0.646 max=942781.997
+             after  min=-0.551 p1=-0.551 p50=0.014 p99=0.278 max=0.278
+    [winsor] ln_tar_size              before min=-8.432 p1=2.710 p50=10.213 p99=16.508 max=24.338
+             after  min=6.393 p1=6.393 p50=10.213 p99=14.453 max=14.453
+    [winsor] acq_ebitda_margin        before min=-2167677.094 p1=-41.924 p50=0.116 p99=0.861 max=340441.363
+             after  min=-2.140 p1=-2.140 p50=0.116 p99=0.568 max=0.568
+    [winsor] acq_leverage             before min=-699.255 p1=0.000 p50=0.501 p99=3.519 max=134493398.783
+             after  min=0.049 p1=0.049 p50=0.501 p99=1.000 max=1.000
+    [winsor] acq_roa                  before min=-57809953.386 p1=-3.886 p50=0.031 p99=0.373 max=5798326.783
+             after  min=-0.488 p1=-0.488 p50=0.031 p99=0.174 max=0.174
+    [winsor] ln_acq_size              before min=-11.860 p1=2.867 p50=12.652 p99=18.576 max=24.600
+             after  min=7.503 p1=7.503 p50=12.652 p99=16.893 max=16.893
+    [winsor] ln_rel_size              before min=-23.413 p1=-7.355 p50=2.239 p99=9.990 max=24.737
+             after  min=-1.724 p1=-1.724 p50=2.239 p99=6.606 max=6.606
+    [winsor] tar_post_ebitda_margin   before min=-17738066.492 p1=-52.909 p50=0.065 p99=0.993 max=821495.006
+             after  min=-2.163 p1=-2.163 p50=0.065 p99=0.623 max=0.623
+    [winsor] tar_post_roa             before min=-716633.619 p1=-2.557 p50=0.016 p99=0.983 max=1106046957.047
+             after  min=-0.473 p1=-0.473 p50=0.016 p99=0.343 max=0.343
+    [winsor] ln_tar_post_size         before min=-8.064 p1=1.962 p50=10.235 p99=16.434 max=24.356
+             after  min=6.385 p1=6.385 p50=10.235 p99=14.288 max=14.288
+    [winsor] tar_post_leverage        before min=nan p1=nan p50=nan p99=nan max=nan
+             after  min=nan p1=nan p50=nan p99=nan max=nan
+    [winsor] acq_post_ebitda_margin   before min=-2958635.789 p1=-44.284 p50=0.106 p99=0.929 max=460610.871
+             after  min=-2.514 p1=-2.514 p50=0.106 p99=0.585 max=0.585
+    [winsor] acq_post_roa             before min=-212818.999 p1=-2.309 p50=0.025 p99=0.379 max=3959.909
+             after  min=-0.391 p1=-0.391 p50=0.025 p99=0.161 max=0.161
+    [winsor] ln_acq_post_size         before min=-8.236 p1=4.923 p50=12.964 p99=18.897 max=24.723
+             after  min=8.600 p1=8.600 p50=12.964 p99=17.076 max=17.076
+    [winsor] acq_post_leverage        before min=-498138.849 p1=0.000 p50=0.512 p99=2.447 max=3695277.441
+             after  min=0.046 p1=0.046 p50=0.512 p99=1.000 max=1.000
+  winsorised 18 cols @ [0.05,0.95]
+    tar_ebitda_margin        valid=35,776 (15.8%)
+    tar_leverage             valid=81,130 (35.9%)
+    tar_rev_growth           valid=0 (0.0%)
+    tar_roa                  valid=60,834 (26.9%)
+    acq_ebitda_margin        valid=75,818 (33.5%)
+    acq_leverage             valid=127,052 (56.2%)
+    acq_roa                  valid=112,593 (49.8%)
+    ln_rel_size              valid=56,878 (25.1%)
+    tar_post_leverage        valid=0 (0.0%)
+    acq_post_leverage        valid=149,934 (66.3%)
+
+==============================================================================
+STEP 6 — firm age
+==============================================================================
+  target_age   valid=130,786   (57.8%)
+  acquirer_age valid=182,221   (80.5%)
+
+==============================================================================
+STEP 7 — DaysToCompletion & ln_days
+==============================================================================
+  announced_d   parsed OK: 226,249 / 226,249
+  completed_d   parsed OK: 147,015 / 226,249
+  assumed_comp_d parsed OK: 69,046 / 226,249
+  730-day placeholder -> NaT: 0
+  zero-duration placeholder -> NaT: 68,006
+  DaysToCompletion valid=146,823 (64.9%)  p50=152 p90=731
+  ln_days         valid=146,823
+
+==============================================================================
+STEP 8 — legal origin / classification distance
+==============================================================================
+  national_class 基于 tar_primary_sic_code
+  common_law_tar=1: 108,237 (47.8%)
+  common_law_acq=1: 112,963 (49.9%)
+
+==============================================================================
+STEP 9 — vendor dummies（数据已在 06a 并入）
+==============================================================================
+  vendor_type 非空: 126,749 / 226,249 (56.0%)
+  取值(10): ['UNMAPPED', 'corporate', 'financial_inst', 'government', 'individual_natural', 'insolvency', 'management', 'pe_vc', 'shareholder_group', 'undisclosed']
+    ven_is_UNMAPPED            =1: 22,825 (10.1%)
+    ven_is_corporate           =1: 75,029 (33.2%)
+    ven_is_financial_inst      =1: 3,368 (1.5%)
+    ven_is_government          =1: 1,820 (0.8%)
+    ven_is_individual_natural  =1: 1,349 (0.6%)
+    ven_is_insolvency          =1: 2,500 (1.1%)
+    ven_is_management          =1: 4,211 (1.9%)
+    ven_is_pe_vc               =1: 2,305 (1.0%)
+    ven_is_shareholder_group   =1: 12,862 (5.7%)
+    ven_is_undisclosed         =1: 480 (0.2%)
+
+==============================================================================
+STEP 10 — ln_deal_value
+==============================================================================
+  ln_deal_value valid=226,249 (100.0%)  p1=6.99 p50=9.89 p99=15.27
+
+==============================================================================
+STEP 11 — Table-6 别名变量
+==============================================================================
+    [MISS] deal_equity_value -> 全 NaN
+    [MISS] deal_modelled_enterprise_value -> 全 NaN
+    tar_ta_for_t6          non-null=83,973 (37.1%)
+    tar_rev_for_t6         non-null=80,911 (35.8%)
+    tar_mktcap_for_t6      non-null=0 (0.0%)
+    tar_ev_for_t6          non-null=0 (0.0%)
+    tar_mb_for_t6          non-null=0 (0.0%)
+
+==============================================================================
+STEP 12 — has_comment
+==============================================================================
+  has_comment=1: 226,199 (100.0%)
+
+==============================================================================
+STEP 13 — SIC-peer 占位 (NaN)
+==============================================================================
+
+==============================================================================
+STEP 14 — 白名单核对
+==============================================================================
+  [EXIST] deal_num                                            226,249  (100.0%)
+  [EXIST] _row_id                                             226,249  (100.0%)
+  [EXIST] deal_year                                           226,249  (100.0%)
+  [EXIST] tar_sic3                                            226,249  (100.0%)
+  [EXIST] tar_sic2                                            226,249  (100.0%)
+  [EXIST] acq_sic3                                            226,249  (100.0%)
+  [EXIST] legal_origin_tar                                    223,590  (98.8%)
+  [EXIST] legal_origin_acq                                    224,034  (99.0%)
+  [EXIST] reg_body_count                                      226,249  (100.0%)
+  [EXIST] reg_country_count                                   226,249  (100.0%)
+  [EXIST] reg_antitrust                                       226,249  (100.0%)
+  [EXIST] reg_securities                                      226,249  (100.0%)
+  [EXIST] reg_state_assets                                    226,249  (100.0%)
+  [EXIST] reg_foreign_invest                                  226,249  (100.0%)
+  [EXIST] reg_financial                                       226,249  (100.0%)
+  [EXIST] reg_defense_tech                                    226,249  (100.0%)
+  [EXIST] reg_cross_national                                  226,249  (100.0%)
+  [EXIST] reg_common_law                                      226,249  (100.0%)
+  [EXIST] reg_civil_law                                       226,249  (100.0%)
+  [EXIST] reg_mixed_legal                                     226,249  (100.0%)
+  [EXIST] regulatory_bodies                                    25,225  (11.1%)
+  [EXIST] regulatory_countries                                 25,225  (11.1%)
+  [EXIST] total_timeline_days                                 151,878  (67.1%)
+  [EXIST] has_rumour                                          226,199  (100.0%)
+  [EXIST] has_target_reject                                   226,199  (100.0%)
+  [EXIST] has_phase2_investigation                            226,199  (100.0%)
+  [EXIST] has_goshop                                          226,199  (100.0%)
+  [EXIST] num_unique_reg                                      226,199  (100.0%)
+  [EXIST] comment_char_length                                 226,199  (100.0%)
+  [EXIST] comment_wordcount                                   226,199  (100.0%)
+  [EXIST] sentence_event_count                                226,199  (100.0%)
+  [EXIST] lm_pos_count                                        226,199  (100.0%)
+  [EXIST] lm_neg_count                                        226,199  (100.0%)
+  [EXIST] lm_uncertain_count                                  226,199  (100.0%)
+  [EXIST] lm_litigious_count                                  226,199  (100.0%)
+  [EXIST] lm_strongmodal_count                                226,199  (100.0%)
+  [EXIST] lm_weakmodal_count                                  226,199  (100.0%)
+  [EXIST] lm_constrain_count                                  226,199  (100.0%)
+  [EXIST] lm_pos_density                                      226,199  (100.0%)
+  [EXIST] lm_neg_density                                      226,199  (100.0%)
+  [EXIST] lm_uncertain_density                                226,199  (100.0%)
+  [EXIST] lm_litigious_density                                226,199  (100.0%)
+  [EXIST] lm_strongmodal_density                              226,199  (100.0%)
+  [EXIST] lm_weakmodal_density                                226,199  (100.0%)
+  [EXIST] lm_constrain_density                                226,199  (100.0%)
+  [MISS]  lm_net_sentiment                                          0  (0.0%)
+  [EXIST] num_Stock_Exchange                                  195,503  (86.4%)
+  [EXIST] num_Website                                         195,503  (86.4%)
+  [EXIST] num_Company_Press_Release                           195,503  (86.4%)
+  [EXIST] num_Electronic_Publication                          195,503  (86.4%)
+  [EXIST] num_Advisor_Submission                              195,503  (86.4%)
+  [EXIST] num_Miscellaneous                                   195,503  (86.4%)
+  [EXIST] num_source_other                                    195,503  (86.4%)
+  [EXIST] total_info_source                                   195,503  (86.4%)
+  [EXIST] pre_deal_tar_rev_rev_last_avail_yr                   80,911  (35.8%)
+  [EXIST] pre_deal_tar_ebitda_last_avail_yr                    38,732  (17.1%)
+  [EXIST] pre_deal_tar_ebit_last_avail_yr                      59,623  (26.4%)
+  [EXIST] pre_deal_tar_pbt_last_avail_yr                       75,849  (33.5%)
+  [EXIST] pre_deal_tar_pat_last_avail_yr                       61,667  (27.3%)
+  [EXIST] pre_deal_tar_np_last_avail_yr                        10,592  (4.7%)
+  [EXIST] pre_deal_tar_ta_last_avail_yr                        83,973  (37.1%)
+  [EXIST] pre_deal_tar_na_last_avail_yr                        12,704  (5.6%)
+  [EXIST] pre_deal_tar_eq_last_avail_yr                        81,650  (36.1%)
+  [EXIST] pre_deal_tar_current_liabilities_last_avail_yr       66,118  (29.2%)
+  [EXIST] pre_deal_acq_rev_rev_last_avail_yr                  122,510  (54.1%)
+  [EXIST] pre_deal_acq_ebitda_last_avail_yr                    79,580  (35.2%)
+  [EXIST] pre_deal_acq_pat_last_avail_yr                      113,221  (50.0%)
+  [EXIST] pre_deal_acq_ta_last_avail_yr                       127,956  (56.6%)
+  [EXIST] pre_deal_acq_eq_last_avail_yr                       127,530  (56.4%)
+  [EXIST] post_deal_tar_rev_rev_1st_avail_yr                   84,478  (37.3%)
+  [EXIST] post_deal_tar_ebitda_1st_avail_yr                    35,065  (15.5%)
+  [EXIST] post_deal_tar_ebit_1st_avail_yr                      57,414  (25.4%)
+  [EXIST] post_deal_tar_pbt_1st_avail_yr                       75,198  (33.2%)
+  [EXIST] post_deal_tar_pat_1st_avail_yr                       57,384  (25.4%)
+  [EXIST] post_deal_tar_np_1st_avail_yr                         3,477  (1.5%)
+  [EXIST] post_deal_tar_ta_1st_avail_yr                        81,231  (35.9%)
+  [EXIST] post_deal_tar_na_1st_avail_yr                         3,592  (1.6%)
+  [EXIST] post_deal_tar_current_liabilities_1st_avail_yr       65,355  (28.9%)
+  [EXIST] post_deal_acq_rev_rev_1st_avail_yr                  144,648  (63.9%)
+  [EXIST] post_deal_acq_ebitda_1st_avail_yr                    90,072  (39.8%)
+  [EXIST] post_deal_acq_ebit_1st_avail_yr                     129,107  (57.1%)
+  [EXIST] post_deal_acq_pbt_1st_avail_yr                      143,764  (63.5%)
+  [EXIST] post_deal_acq_pat_1st_avail_yr                      128,402  (56.8%)
+  [EXIST] post_deal_acq_np_1st_avail_yr                        54,223  (24.0%)
+  [EXIST] post_deal_acq_ta_1st_avail_yr                       150,542  (66.5%)
+  [EXIST] post_deal_acq_na_1st_avail_yr                        12,999  (5.7%)
+  [EXIST] post_deal_acq_shareholder_funds_1st_avail_yr        150,356  (66.5%)
+  [MISS]  pre_rev_mul_ly                                            0  (0.0%)
+  [MISS]  pre_ebitda_mul_ly                                         0  (0.0%)
+  [MISS]  pre_ebit_mul_ly                                           0  (0.0%)
+  [MISS]  pre_pbt_mul_ly                                            0  (0.0%)
+  [MISS]  pre_ta_mul_ly                                             0  (0.0%)
+  [MISS]  pre_eq_mul_ly                                             0  (0.0%)
+  [EXIST] pre_pat_mul_ly                                       30,462  (13.5%)
+  [EXIST] pre_np_mul_ly                                         5,278  (2.3%)
+  [EXIST] pre_na_mul_ly                                        11,096  (4.9%)
+  [EXIST] pre_cl_mul_ly                                        50,581  (22.4%)
+  [EXIST] pre_cap_mul_ly                                       13,193  (5.8%)
+  [MISS]  post_rev_mul_fy                                           0  (0.0%)
+  [MISS]  post_ebitda_mul_fy                                        0  (0.0%)
+  [MISS]  post_ebit_mul_fy                                          0  (0.0%)
+  [EXIST] ln_rev_x                                             59,555  (26.3%)
+  [EXIST] ln_ebitda_x                                          24,744  (10.9%)
+  [EXIST] ln_ebit_x                                            29,497  (13.0%)
+  [EXIST] ln_pbt_x                                             36,633  (16.2%)
+  [EXIST] ln_ta_x                                              65,997  (29.2%)
+  [EXIST] ln_eq_x                                              55,369  (24.5%)
+  [MISS]  ln_pat_x                                                  0  (0.0%)
+  [MISS]  ln_np_x                                                   0  (0.0%)
+  [MISS]  ln_na_x                                                   0  (0.0%)
+  [MISS]  ln_cl_x                                                   0  (0.0%)
+  [MISS]  ln_cap_x                                                  0  (0.0%)
+  [EXIST] ln_rev_y                                             42,459  (18.8%)
+  [EXIST] ln_ebitda_y                                          19,282  (8.5%)
+  [EXIST] ln_ebit_y                                            22,774  (10.1%)
+  [EXIST] ln_pbt_y                                             28,104  (12.4%)
+  [EXIST] ln_ta_y                                              46,976  (20.8%)
+  [EXIST] ln_eq_y                                              40,822  (18.0%)
+  [MISS]  ln_pat_y                                                  0  (0.0%)
+  [MISS]  ln_np_y                                                   0  (0.0%)
+  [MISS]  ln_na_y                                                   0  (0.0%)
+  [MISS]  ln_cl_y                                                   0  (0.0%)
+  [MISS]  ln_cap_y                                                  0  (0.0%)
+  [MISS]  ln_post_rev_x                                             0  (0.0%)
+  [MISS]  ln_post_ebitda_x                                          0  (0.0%)
+  [MISS]  ln_post_ebit_x                                            0  (0.0%)
+  [MISS]  ln_post_rev_y                                             0  (0.0%)
+  [MISS]  ln_post_ebitda_y                                          0  (0.0%)
+  [MISS]  ln_post_ebit_y                                            0  (0.0%)
+  [EXIST] ln_text_rev                                          62,687  (27.7%)
+  [EXIST] ln_text_ebitda                                       25,761  (11.4%)
+  [EXIST] ln_text_ebit                                         31,878  (14.1%)
+  [EXIST] ln_text_pbt                                          39,412  (17.4%)
+  [EXIST] ln_text_ta                                           70,569  (31.2%)
+  [EXIST] ln_text_eq                                           60,888  (26.9%)
+  [EXIST] ln_sic_rev                                                0  (0.0%)
+  [EXIST] ln_sic_ebitda                                             0  (0.0%)
+  [EXIST] ln_sic_ebit                                               0  (0.0%)
+  [EXIST] DaysToCompletion                                    146,823  (64.9%)
+  [EXIST] ln_days                                             146,823  (64.9%)
+  [EXIST] rumor_jfe                                           226,249  (100.0%)
+  [EXIST] has_rumor_status                                    226,249  (100.0%)
+  [EXIST] rumor_lead_days                                     226,203  (100.0%)
+  [MISS]  rumor_lead_yr                                             0  (0.0%)
+  [EXIST] completed_flag                                      226,249  (100.0%)
+  [EXIST] completed_strict                                    226,249  (100.0%)
+  [EXIST] tar_incorp_d_year                                   132,438  (58.5%)
+  [EXIST] acq_incorp_d_year                                   185,247  (81.9%)
+  [EXIST] target_age                                          130,786  (57.8%)
+  [EXIST] acquirer_age                                        182,221  (80.5%)
+  [EXIST] cross_industry                                      226,249  (100.0%)
+  [EXIST] cross_industry_alt                                        0  (0.0%)
+  [EXIST] ln_deal_value                                       226,249  (100.0%)
+  [EXIST] cross_border                                        226,249  (100.0%)
+  [EXIST] deal_pay_method                                     170,329  (75.3%)
+  [EXIST] deal_pay_method_all                                 170,329  (75.3%)
+  [EXIST] deal_pay_method_n                                   170,329  (75.3%)
+  [EXIST] pay_has_cash                                        226,249  (100.0%)
+  [EXIST] pay_has_shares                                      226,249  (100.0%)
+  [EXIST] pay_has_debt                                        226,249  (100.0%)
+  [EXIST] pay_has_other                                       226,249  (100.0%)
+  [EXIST] pay_n_class                                         226,249  (100.0%)
+  [EXIST] pay_pure_cash                                       226,249  (100.0%)
+  [EXIST] pay_pure_shares                                     226,249  (100.0%)
+  [EXIST] pay_pure_debt                                       226,249  (100.0%)
+  [EXIST] pay_pure_other                                      226,249  (100.0%)
+  [EXIST] pay_mix                                             226,249  (100.0%)
+  [EXIST] pay_unknown                                         226,249  (100.0%)
+  [EXIST] pay_mix_cash_shares                                 226,249  (100.0%)
+  [EXIST] pay_mix_with_shares                                 226,249  (100.0%)
+  [EXIST] pay_mix_with_cash                                   226,249  (100.0%)
+  [EXIST] pay_mix_with_debt                                   226,249  (100.0%)
+  [EXIST] pay_class                                           226,249  (100.0%)
+  [EXIST] deal_struct_all                                      68,245  (30.2%)
+  [EXIST] deal_struct_n                                        68,245  (30.2%)
+  [EXIST] deal_fin_all                                         90,918  (40.2%)
+  [EXIST] deal_fin_n                                           90,918  (40.2%)
+  [EXIST] deal_type_all                                       226,249  (100.0%)
+  [EXIST] deal_type_n                                         226,249  (100.0%)
+  [EXIST] deal_value                                          226,249  (100.0%)
+  [EXIST] deal_status                                         226,249  (100.0%)
+  [EXIST] ln_tar_size                                          83,581  (36.9%)
+  [EXIST] tar_ebitda_margin                                    35,776  (15.8%)
+  [EXIST] tar_leverage                                         81,130  (35.9%)
+  [EXIST] tar_rev_growth                                            0  (0.0%)
+  [EXIST] tar_roa                                              60,834  (26.9%)
+  [EXIST] tar_post_ebitda_margin                               32,448  (14.3%)
+  [EXIST] tar_post_roa                                         56,637  (25.0%)
+  [EXIST] ln_tar_post_size                                     80,625  (35.6%)
+  [EXIST] tar_post_leverage                                         0  (0.0%)
+  [EXIST] ln_acq_size                                         127,545  (56.4%)
+  [EXIST] acq_ebitda_margin                                    75,818  (33.5%)
+  [EXIST] acq_leverage                                        127,052  (56.2%)
+  [EXIST] acq_roa                                             112,593  (49.8%)
+  [EXIST] ln_rel_size                                          56,878  (25.1%)
+  [EXIST] ln_acq_post_size                                    150,235  (66.4%)
+  [EXIST] acq_post_ebitda_margin                               85,112  (37.6%)
+  [EXIST] acq_post_roa                                        127,807  (56.5%)
+  [EXIST] acq_post_leverage                                   149,934  (66.3%)
+  [EXIST] tar_country_code                                    226,249  (100.0%)
+  [EXIST] acq_country_code                                    226,249  (100.0%)
+  [MISS]  stock_traded_gdp_tar                                      0  (0.0%)
+  [MISS]  stock_traded_gdp_acq                                      0  (0.0%)
+  [EXIST] common_law_tar                                      226,249  (100.0%)
+  [EXIST] common_law_acq                                      226,249  (100.0%)
+  [EXIST] tar_ta_for_t6                                        83,973  (37.1%)
+  [EXIST] tar_rev_for_t6                                       80,911  (35.8%)
+  [EXIST] tar_mktcap_for_t6                                         0  (0.0%)
+  [EXIST] tar_ev_for_t6                                             0  (0.0%)
+  [EXIST] tar_mb_for_t6                                             0  (0.0%)
+  [EXIST] tar_listed                                          223,103  (98.6%)
+  [EXIST] acq_listed                                          226,248  (100.0%)
+  [EXIST] sic_coverage_rate                                         0  (0.0%)
+  [EXIST] acq_tar_similarity                                        0  (0.0%)
+  [EXIST] classification_distance_tar                         223,104  (98.6%)
+  [EXIST] classification_distance_acq                         223,915  (99.0%)
+  [EXIST] tar_name                                            226,249  (100.0%)
+  [EXIST] acq_name                                            226,249  (100.0%)
+  [EXIST] ven_name                                            126,749  (56.0%)
+  [EXIST] text_peer_sim_mean                                   99,818  (44.1%)
+  [EXIST] n_peers_rev                                          99,818  (44.1%)
+  [EXIST] n_peers_ebitda                                       99,818  (44.1%)
+  [EXIST] n_peers_ebit                                         99,818  (44.1%)
+  [EXIST] n_peers_pbt                                          99,818  (44.1%)
+  [EXIST] n_peers_ta                                           99,818  (44.1%)
+  [EXIST] n_peers_eq                                           99,818  (44.1%)
+  [EXIST] bench_rev                                            62,687  (27.7%)
+  [EXIST] bench_ebitda                                         25,761  (11.4%)
+  [EXIST] bench_ebit                                           31,878  (14.1%)
+  [EXIST] bench_pbt                                            39,412  (17.4%)
+  [EXIST] bench_ta                                             70,569  (31.2%)
+  [EXIST] bench_eq                                             60,888  (26.9%)
+  [EXIST] has_comment                                         226,249  (100.0%)
+  [EXIST] ven_is_UNMAPPED                                     126,749  (56.0%)
+  [EXIST] ven_is_corporate                                    126,749  (56.0%)
+  [EXIST] ven_is_financial_inst                               126,749  (56.0%)
+  [EXIST] ven_is_government                                   126,749  (56.0%)
+  [EXIST] ven_is_individual_natural                           126,749  (56.0%)
+  [EXIST] ven_is_insolvency                                   126,749  (56.0%)
+  [EXIST] ven_is_management                                   126,749  (56.0%)
+  [EXIST] ven_is_pe_vc                                        126,749  (56.0%)
+  [EXIST] ven_is_shareholder_group                            126,749  (56.0%)
+  [EXIST] ven_is_undisclosed                                  126,749  (56.0%)
+  [EXIST] ven_unmapped                                        126,749  (56.0%)
+  [EXIST] expected_comp_d                                      14,654  (6.5%)
+  [EXIST] postponed_d                                              46  (0.0%)
+  [EXIST] deal_status_clean                                   226,249  (100.0%)
+  [EXIST] announced_d                                         226,249  (100.0%)
+  [EXIST] completed_d                                         147,015  (65.0%)
+  [EXIST] withdrawn_d                                           7,902  (3.5%)
+  [EXIST] assumed_comp_d                                       69,046  (30.5%)
+  [EXIST] rumour_d                                            226,249  (100.0%)
+  [EXIST] pre_rev_mul_ly_x                                     59,555  (26.3%)
+  [EXIST] pre_ebitda_mul_ly_x                                  24,754  (10.9%)
+  [EXIST] pre_ebit_mul_ly_x                                    29,506  (13.0%)
+  [EXIST] pre_pbt_mul_ly_x                                     36,645  (16.2%)
+  [EXIST] pre_ta_mul_ly_x                                      66,114  (29.2%)
+  [EXIST] pre_eq_mul_ly_x                                      55,420  (24.5%)
+  [EXIST] deal_eq_val_usd                                      79,656  (35.2%)
+  [EXIST] deal_ent_val_usd                                     21,079  (9.3%)
+  [EXIST] deal_tar_val_tot_usd                                189,213  (83.6%)
+  [EXIST] stake_init_pct                                      226,249  (100.0%)
+  [EXIST] stake_acq_pct                                       189,278  (83.7%)
+  [EXIST] stake_final_pct                                     218,222  (96.5%)
+  [EXIST] deal_ccy                                            226,249  (100.0%)
+  [EXIST] src_file                                            226,249  (100.0%)
+  [EXIST] pre_deal_tar_cap                                     13,384  (5.9%)
+  [EXIST] pre_deal_acq_ebit_last_avail_yr                     113,454  (50.1%)
+  [EXIST] pre_deal_acq_pbt_last_avail_yr                      123,047  (54.4%)
+  [EXIST] pre_deal_acq_np_last_avail_yr                        53,971  (23.9%)
+  [EXIST] pre_deal_acq_na_last_avail_yr                        54,018  (23.9%)
+  [EXIST] pre_deal_acq_current_liabilities_last_avail_yr      117,485  (51.9%)
+  [EXIST] pre_deal_acq_cap                                     73,906  (32.7%)
+  [EXIST] tar_bvd_id_num                                      164,272  (72.6%)
+  [EXIST] tar_orbis_id_num                                    162,668  (71.9%)
+  [EXIST] acq_bvd_id_num                                      204,064  (90.2%)
+  [EXIST] acq_orbis_id_num                                    202,879  (89.7%)
+  [EXIST] ven_incorp_yr                                        71,364  (31.5%)
+  [EXIST] tar_ipo_d                                            21,114  (9.3%)
+  [EXIST] acq_ipo_d                                           118,668  (52.5%)
+  [EXIST] ven_listed                                          125,813  (55.6%)
+  [EXIST] ven_ipo_d                                            30,925  (13.7%)
+  [EXIST] post_deal_tar_shareholder_funds_1st_avail_yr         81,110  (35.8%)
+  [EXIST] post_deal_tar_mkt_cap_1st_avail_yr                    6,901  (3.1%)
+  [EXIST] post_deal_acq_mkt_cap_1st_avail_yr                   88,317  (39.0%)
+  [EXIST] tar_primary_sic_code                                226,249  (100.0%)
+  [EXIST] acq_primary_sic_code                                226,249  (100.0%)
+  [EXIST] tar_sic4                                            226,249  (100.0%)
+  [EXIST] acq_sic4                                            226,249  (100.0%)
+  [EXIST] acq_sic2                                            226,249  (100.0%)
+  [EXIST] sic3_rolling_count                                  226,249  (100.0%)
+  [EXIST] sic2_rolling_count                                  226,249  (100.0%)
+  [EXIST] sic_benchmark_level                                 226,237  (100.0%)
+  [EXIST] tar_overview_wordcount                                    0  (0.0%)
+  [EXIST] text_pool_rolling_count                                   0  (0.0%)
+  [EXIST] stake_acq_pct_imputed                                36,971  (16.3%)
+  [EXIST] stake_eff_pct                                       226,249  (100.0%)
+  [EXIST] tar_age                                             130,786  (57.8%)
+  [EXIST] acq_age                                             182,221  (80.5%)
+  [EXIST] price_event_num                                     226,199  (100.0%)
+  [EXIST] rival_bidder_num                                    226,199  (100.0%)
+  [EXIST] reg_event_count                                     226,199  (100.0%)
+  [EXIST] has_lm_pos                                          226,199  (100.0%)
+  [EXIST] has_lm_neg                                          226,199  (100.0%)
+  [EXIST] has_lm_uncertain                                    226,199  (100.0%)
+  [EXIST] has_lm_litigious                                    226,199  (100.0%)
+  [EXIST] has_lm_strongmodal                                  226,199  (100.0%)
+  [EXIST] has_lm_weakmodal                                    226,199  (100.0%)
+  [EXIST] has_lm_constrain                                    226,199  (100.0%)
+  [EXIST] has_unconditional_offer                             226,199  (100.0%)
+  [EXIST] has_deal_complete                                   226,199  (100.0%)
+  [EXIST] has_reg_remedy                                      226,199  (100.0%)
+  [EXIST] has_debt_assumption                                 226,199  (100.0%)
+  [EXIST] dt_first                                            217,480  (96.1%)
+  [EXIST] dt_last                                             217,480  (96.1%)
+  [EXIST] avg_premium_pct                                     226,199  (100.0%)
+  [EXIST] comment_n                                           226,199  (100.0%)
+  [EXIST] ven_bvd_id_num                                       93,952  (41.5%)
+  [EXIST] vendor_type                                         126,749  (56.0%)
+  [EXIST] vendor_type_source                                  126,749  (56.0%)
+  [EXIST] matched_pattern                                     103,924  (45.9%)
+  [EXIST] pre_rev_mul_ly_y                                     42,459  (18.8%)
+  [EXIST] pre_ebitda_mul_ly_y                                  19,282  (8.5%)
+  [EXIST] pre_ebit_mul_ly_y                                    22,774  (10.1%)
+  [EXIST] pre_pbt_mul_ly_y                                     28,104  (12.4%)
+  [EXIST] pre_ta_mul_ly_y                                      46,976  (20.8%)
+  [EXIST] pre_eq_mul_ly_y                                      40,822  (18.0%)
+  [EXIST] ln_pat                                               30,450  (13.5%)
+  [EXIST] ln_np                                                 5,278  (2.3%)
+  [EXIST] ln_na                                                11,079  (4.9%)
+  [EXIST] ln_cl                                                50,559  (22.3%)
+  [EXIST] ln_cap                                                    0  (0.0%)
+  [EXIST] national_class                                      226,249  (100.0%)
+  [EXIST] peer_overlap_frac                                         0  (0.0%)
+  [EXIST] ind_text_diversity                                        0  (0.0%)
+  [EXIST] ind_text_diversity_w                                      0  (0.0%)
+  var_check: D:\MA\data\merged\07_var_check.csv
+
+==============================================================================
+STEP 15 — 导出 Stata .dta
+==============================================================================
+  dta: D:\MA\data\merged\07_full_sample.dta  shape=(226249, 307)
+
+==============================================================================
+STEP 16 — 保存 CSV + 汇总
+==============================================================================
+  csv: D:\MA\data\merged\07_full_sample.csv  rows=226,249  306.5 MB
+
+==============================================================================
+FINAL — 关键变量覆盖率
+==============================================================================
+  ln_rev_x                     59,555  (26.3%)
+  ln_rev_y                     42,459  (18.8%)
+  ln_ebitda_x                  24,744  (10.9%)
+  ln_ebitda_y                  19,282  (8.5%)
+  ln_ebit_x                    29,497  (13.0%)
+  ln_ebit_y                    22,774  (10.1%)
+  ln_pbt_x                     36,633  (16.2%)
+  ln_pbt_y                     28,104  (12.4%)
+  ln_ta_x                      65,997  (29.2%)
+  ln_ta_y                      46,976  (20.8%)
+  ln_eq_x                      55,369  (24.5%)
+  ln_eq_y                      40,822  (18.0%)
+  ln_pat_x                    MISSING
+  ln_pat_y                    MISSING
+  ln_np_x                     MISSING
+  ln_np_y                     MISSING
+  ln_na_x                     MISSING
+  ln_na_y                     MISSING
+  ln_cl_x                     MISSING
+  ln_cl_y                     MISSING
+  ln_cap_x                    MISSING
+  ln_cap_y                    MISSING
+  ln_post_rev_x               MISSING
+  ln_post_rev_y               MISSING
+  ln_post_ebitda_x            MISSING
+  ln_post_ebitda_y            MISSING
+  ln_post_ebit_x              MISSING
+  ln_post_ebit_y              MISSING
+  ln_text_rev                  62,687  (27.7%)
+  ln_text_ebitda               25,761  (11.4%)
+  ln_text_ebit                 31,878  (14.1%)
+  ln_text_pbt                  39,412  (17.4%)
+  ln_text_ta                   70,569  (31.2%)
+  ln_text_eq                   60,888  (26.9%)
+  text_peer_sim_mean           99,818  (44.1%)
+  ln_days                     146,823  (64.9%)
+  ln_deal_value               226,249  (100.0%)
+  tar_ebitda_margin            35,776  (15.8%)
+  acq_ebitda_margin            75,818  (33.5%)
+  tar_post_leverage                 0  (0.0%)
+  acq_post_leverage           149,934  (66.3%)
+  target_age                  130,786  (57.8%)
+  acquirer_age                182,221  (80.5%)
+  common_law_tar              226,249  (100.0%)
+  tar_ta_for_t6                83,973  (37.1%)
+  tar_rev_for_t6               80,911  (35.8%)
+  tar_mktcap_for_t6                 0  (0.0%)
+  tar_ev_for_t6                     0  (0.0%)
+  tar_mb_for_t6                     0  (0.0%)
+
+  done in 138.8s

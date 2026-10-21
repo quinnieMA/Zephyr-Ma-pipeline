@@ -1,0 +1,125 @@
+06:01:34  INFO      ======================================================================
+06:01:34  INFO      === Script 06b: Doc2Vec Text-Peer KNN Benchmark (v2) ===
+06:01:34  INFO      ======================================================================
+06:01:34  INFO      Parameters: K=10, MinPeers=3, MinTokens=10, VecSize=300, Epochs=40
+06:01:34  INFO      Loading stopwords...
+06:01:34  INFO        Total combined stopwords: 400
+06:01:34  INFO      
+--- 1. Loading Data ---
+06:02:11  INFO        [PRE-FILTER-01] drop 无 tar_overview 行 1,097,145 -> 349,182（删除 747,963，占 68.17%）
+06:02:12  INFO        [FOLD-01] 5 键缺失(填 __NA__，不删行): tar_bvd_id_num=1,683 | acq_name=34,325 | acq_bvd_id_num=78,870
+06:02:21  INFO        [FOLD-01] 349,182 rows -> 349,182 rows | duplicated(KEYS)=0 | 丢弃 0 行
+06:02:21  INFO        [FOLD-01 折叠前] 覆盖率: tar_overview 349,182/349182=100.00% | tar_name 349,182/349182=100.00% | tar_bvd_id_num 349,182/349182=100.00% | tar_primary_sic_code 349,010/349182=99.95% | acq_name 349,182/349182=100.00% | acq_bvd_id_num 349,182/349182=100.00% | acq_primary_sic_code n/a
+06:02:23  INFO        [FOLD-01 折叠后] 覆盖率: tar_overview 349,182/349182=100.00% | tar_name 349,182/349182=100.00% | tar_bvd_id_num 349,182/349182=100.00% | tar_primary_sic_code 349,010/349182=99.95% | acq_name 349,182/349182=100.00% | acq_bvd_id_num 349,182/349182=100.00% | acq_primary_sic_code n/a
+06:02:23  INFO        [FOLD-05] 5 键缺失(填 __NA__，不删行): tar_bvd_id_num=61,977 | acq_bvd_id_num=22,185
+06:02:25  INFO        [FOLD-05] 226,249 rows -> 226,249 rows | duplicated(KEYS)=0 | 丢弃 0 行
+06:02:30  INFO        [MERGE-5KEY] left=349,182 right=226,249 inner=100,280 | duplicated(KEYS)=0
+06:02:30  INFO      Merged raw: 100,280 rows
+06:02:30  INFO      After merge columns: ['deal_num', 'tar_overview', 'tar_bvd_id_num', 'tar_name', 'tar_primary_sic_code', 'acq_name', 'acq_bvd_id_num', 'tar_incorp_d_year', 'acq_incorp_d_year', 'announced_d', 'completed_d', 'rumour_d', 'pre_rev_mul_ly', 'pre_ebitda_mul_ly', 'pre_ebit_mul_ly', 'pre_pbt_mul_ly', 'pre_ta_mul_ly', 'pre_eq_mul_ly']
+06:02:30  INFO        [KEY-CHECK] merged rows=100,280 | unique deal_num=100,280 | 重复行=0
+06:02:30  INFO        [COVERAGE] merged 关键列:
+06:02:30  INFO            tar_overview               100,280 (100.00%)
+06:02:30  INFO            tar_name                   100,280 (100.00%)
+06:02:30  INFO            tar_bvd_id_num             100,280 (100.00%)
+06:02:30  INFO            tar_primary_sic_code       100,280 (100.00%)
+06:02:30  INFO            tar_incorp_d_year           93,117 ( 92.86%)
+06:02:30  INFO            acq_incorp_d_year           84,242 ( 84.01%)
+06:02:30  INFO            announced_d                100,280 (100.00%)
+06:02:30  INFO            completed_d                 66,445 ( 66.26%)
+06:02:30  INFO            rumour_d                   100,280 (100.00%)
+06:02:30  INFO      
+--- 2. Date Engineering ---
+06:02:31  INFO      Rows with valid tar_incorp_d_year: 93,117
+06:02:31  INFO        deal_date 非空率: 100,280/100,280 = 100.00%
+06:02:31  INFO        deal_year 范围: 1,997 ~ 2,025
+06:02:31  INFO        announced_dt: 有效 100,280 (100.00%)
+06:02:31  INFO        completed_dt: 有效 66,445 (66.26%)
+06:02:31  INFO        rumour_dt: 有效 100,280 (100.00%)
+06:02:31  INFO      
+--- 3. Text Cleaning ---
+06:05:08  INFO        Token stats: mean=51.4, median=46.0, max=340 | 零词条行: 0 (0.00%)
+06:05:08  INFO      
+--- 4. Multiples Winsorization ---
+06:05:08  INFO        pre_rev_mul_ly: clipped [0.040,3403.728], valid=42,459
+06:05:08  INFO        pre_ebitda_mul_ly: clipped [0.458,1067.337], valid=19,282
+06:05:08  INFO        pre_ebit_mul_ly: clipped [0.480,2263.897], valid=22,774
+06:05:08  INFO        pre_pbt_mul_ly: clipped [0.540,2548.636], valid=28,104
+06:05:08  INFO        pre_ta_mul_ly: clipped [0.030,186.285], valid=46,976
+06:05:08  INFO        pre_eq_mul_ly: clipped [0.090,532.018], valid=40,822
+06:05:08  INFO      
+--- 5. Final Corpus ---
+06:05:08  INFO      Final Corpus size (Text + Date): 99,828 rows
+06:05:08  INFO        Corpus token stats: mean=51.6, median=46.0, min=10, max=340
+06:05:08  INFO        Corpus year range: 1,997 ~ 2,025 | 覆盖年份数: 29
+06:05:08  INFO        Corpus 年均规模: 平均 3442 笔/年 | 峰值年份 2017: 5,841 笔
+06:05:08  INFO      
+--- 6. Train Doc2Vec ---
+06:05:08  INFO      Doc2Vec workers=1, vector_size=300, epochs=40
+06:38:09  INFO      Doc2Vec saved, vocab size: 43,227
+06:38:09  INFO      
+--- 7. Build matrix & peer pool ---
+06:38:10  INFO      
+--- 8. Rolling-year KNN peer search ---
+06:45:07  INFO      KNN peer finished, processed 99,818 focal deals
+06:45:07  INFO      
+--- 9. Merge & Saving Wide Table ---
+06:45:12  INFO      Saved wide table to: D:\MA\data\merged\06b_text_peer.csv (100,280 rows)
+06:45:12  INFO        [KEY-CHECK] wide-table deal_num unique: True | rows=100,280 | unique=100,280
+06:45:12  INFO        [OUT-COVERAGE] 宽表 100,280 行 × 22 列:
+06:45:12  INFO            deal_num                 nonnull=  100,280 (100.00%) | min=3.086e+04 | med=1.907e+09 | mean=1.453e+09 | max=2.009e+09
+06:45:12  INFO            deal_date                nonnull=  100,280 (100.00%) | unique=9,247
+06:45:12  INFO            deal_year                nonnull=  100,280 (100.00%) | min=1997 | med=2015 | mean=2014 | max=2025
+06:45:13  INFO            pre_rev_mul_ly           nonnull=   42,459 ( 42.34%) | min=0.04 | med=1.78 | mean=65.13 | max=3404
+06:45:13  INFO            pre_ebitda_mul_ly        nonnull=   19,282 ( 19.23%) | min=0.4581 | med=10.98 | mean=40.32 | max=1067
+06:45:13  INFO            pre_ebit_mul_ly          nonnull=   22,774 ( 22.71%) | min=0.48 | med=14.55 | mean=71.2 | max=2264
+06:45:13  INFO            pre_pbt_mul_ly           nonnull=   28,104 ( 28.03%) | min=0.5403 | med=15.93 | mean=82.95 | max=2549
+06:45:13  INFO            pre_ta_mul_ly            nonnull=   46,976 ( 46.84%) | min=0.03 | med=1.08 | mean=4.77 | max=186.3
+06:45:13  INFO            pre_eq_mul_ly            nonnull=   40,822 ( 40.71%) | min=0.09 | med=2.39 | mean=13.59 | max=532
+06:45:13  INFO            text_peer_sim_mean       nonnull=   99,818 ( 99.54%) | min=-0.063 | med=0.4246 | mean=0.4756 | max=0.9679
+06:45:13  INFO            n_peers_rev              nonnull=   99,818 ( 99.54%) | min=0 | med=3 | mean=3.433 | max=10
+06:45:13  INFO            n_peers_ebitda           nonnull=   99,818 ( 99.54%) | min=0 | med=1 | mean=1.64 | max=10
+06:45:13  INFO            n_peers_ebit             nonnull=   99,818 ( 99.54%) | min=0 | med=2 | mean=1.941 | max=10
+06:45:13  INFO            n_peers_pbt              nonnull=   99,818 ( 99.54%) | min=0 | med=2 | mean=2.273 | max=10
+06:45:13  INFO            n_peers_ta               nonnull=   99,818 ( 99.54%) | min=0 | med=4 | mean=3.903 | max=10
+06:45:13  INFO            n_peers_eq               nonnull=   99,818 ( 99.54%) | min=0 | med=3 | mean=3.371 | max=10
+06:45:13  INFO            bench_rev                nonnull=   62,687 ( 62.51%) | min=0.04 | med=1.74 | mean=16.61 | max=3404
+06:45:13  INFO            bench_ebitda             nonnull=   25,761 ( 25.69%) | min=0.4581 | med=10.58 | mean=19.56 | max=1067
+06:45:13  INFO            bench_ebit               nonnull=   31,878 ( 31.79%) | min=0.48 | med=14.69 | mean=30.13 | max=2264
+06:45:13  INFO            bench_pbt                nonnull=   39,412 ( 39.30%) | min=0.5403 | med=16.6 | mean=39.66 | max=2549
+06:45:13  INFO            bench_ta                 nonnull=   70,569 ( 70.37%) | min=0.03 | med=1.13 | mean=1.856 | max=186.3
+06:45:13  INFO            bench_eq                 nonnull=   60,888 ( 60.72%) | min=0.09 | med=2.64 | mean=5.226 | max=532
+06:45:13  INFO      
+--- 10. Generating Full Detail Table (Long Format) ---
+06:48:57  INFO      Saved peer detail table to: D:\MA\data\merged\06b_text_peer_detail.csv (997,859 rows)
+06:48:58  INFO        [DETAIL] 长表 997,859 行 | 唯一 focal deal: 99,818 | 每 deal 平均 peer 行: 10.0 | 中位数: 10
+06:48:58  INFO        [DETAIL][COVERAGE] 关键列:
+06:48:58  INFO            focal_company_name   nonnull=  997,859 (100.00%)
+06:48:58  INFO            peer_company_name    nonnull=  997,859 (100.00%)
+06:48:58  INFO            cosine_similarity    nonnull=  997,859 (100.00%)
+06:48:58  INFO            peer_ev_rev          nonnull=  342,645 ( 34.34%)
+06:48:58  INFO            peer_ev_ebitda       nonnull=  163,654 ( 16.40%)
+06:48:58  INFO            peer_ev_ebit         nonnull=  193,723 ( 19.41%)
+06:48:58  INFO            peer_ev_pbt          nonnull=  226,935 ( 22.74%)
+06:48:58  INFO            peer_ev_ta           nonnull=  389,632 ( 39.05%)
+06:48:58  INFO            peer_ev_eq           nonnull=  336,499 ( 33.72%)
+06:48:58  INFO      
+======================================================================
+06:48:58  INFO      === COMPREHENSIVE DIAGNOSTICS REPORT ===
+06:48:58  INFO      ======================================================================
+06:48:58  INFO        bench_rev: 62,687 / 100,280 (62.51%)
+06:48:58  INFO        bench_ebitda: 25,761 / 100,280 (25.69%)
+06:48:58  INFO        bench_ebit: 31,878 / 100,280 (31.79%)
+06:48:58  INFO        bench_pbt: 39,412 / 100,280 (39.30%)
+06:48:58  INFO        bench_ta: 70,569 / 100,280 (70.37%)
+06:48:58  INFO        bench_eq: 60,888 / 100,280 (60.72%)
+06:48:58  INFO        Similarity: Mean=0.4756, Median=0.4246, P90=0.7739
+06:48:58  INFO        Peer counts (n_peers_*):
+06:48:58  INFO            n_peers_rev      非零=   92,600 | mean=3.43 | median=3 | p90=6
+06:48:58  INFO            n_peers_ebitda   非零=   67,196 | mean=1.64 | median=1 | p90=4
+06:48:58  INFO            n_peers_ebit     非零=   77,764 | mean=1.94 | median=2 | p90=4
+06:48:58  INFO            n_peers_pbt      非零=   84,588 | mean=2.27 | median=2 | p90=5
+06:48:58  INFO            n_peers_ta       非零=   94,987 | mean=3.90 | median=4 | p90=7
+06:48:58  INFO            n_peers_eq       非零=   92,272 | mean=3.37 | median=3 | p90=6
+06:48:58  INFO        FINAL: 宽表 100,280 行 | 唯一 deal 100,280 | 有 peer 结果的 deal 99,818 (99.54%)
+06:48:58  INFO      
+=== SCRIPT 06b COMPLETE ===
