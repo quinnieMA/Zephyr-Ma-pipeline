@@ -8,24 +8,23 @@ Lossless, audit-first pipeline that turns raw BvD Zephyr M&amp;A exports into a 
 ├── config.py                     # shared paths (ZEPHYR_BASE, BASE_DIR, …)
 ├── data/
 │   ├── cleaned/                  # 01-stage outputs
-│   │   ├── 01_deal_structure_date.csv
-│   │   ├── 01_deal_sic_industry.csv
-│   │   ├── 01_deal_multiple.csv
-│   │   ├── 01_deal_value.csv
-│   │   ├── 01_deal_overview.csv
-│   │   ├── 01b_deal_info_source_count.csv
-│   │   ├── 01b_deal_vendor_type.csv
-│   │   └── 01c_comments_features.csv
-│   └── merged/                   # 02–07 outputs
-│       ├── 02_deal_master.csv
-│       ├── 02_entity_pairs.csv
-│       ├── 03_firm_deal_level.csv
-│       ├── 03_firm_entity_pairs.csv
-│       ├── 04_deal_firm_full.csv
-│       ├── 05_deal_firm_filtered.csv
-│       ├── 06a_merge_comment_vendor.csv
-│       ├── 06b_text_peer.csv
-│       ├── 07_full_sample.csv
+│   │   ├── 01_deal_structure_date.csv             # 02
+│   │   ├── 01_deal_sic_industry.csv               # 03
+│   │   ├── 01_deal_multiple.csv                   # 02
+│   │   ├── 01_deal_value.csv                      # 02
+│   │   ├── 01_deal_overview.csv                   # 03
+│   │   ├── 01b_deal_info_source_count.csv         # 02
+│   │   ├── 01b_deal_vendor_type.csv               # 06a
+│   │   └── 01c_comments_features.csv              # 06a
+│   └── merged/                                    # 02–07 outputs
+│       ├── 02_deal_master.csv                     # 01_deal_structure_date.csv|01_deal_multiple.csv|01_deal_value.csv|01b_deal_info_source_count.csv
+│       ├── 03_firm_deal_level.csv                 # 01_deal_sic_industry.csv| 01_deal_overview.csv
+│       ├── 03_firm_entity_pairs.csv               # multiple targets 
+│       ├── 04_deal_firm_full.csv                  # 02+03
+│       ├── 05_deal_firm_filtered.csv              # 04 + filter
+│       ├── 06a_merge_comment_vendor.csv           # 01c_comments_features.csv|01b_deal_vendor_type.csv+05_deal_firm_filtered.csv
+│       ├── 06b_text_peer.csv                      # 01_deal_overview.csv+05_deal_firm_filtered.csv
+│       ├── 07_full_sample.csv                     # 06a+06b
 │       └── 07_full_sample.dta
 ├── scripts/
 │   ├── 01a_clean_structure_date.py
