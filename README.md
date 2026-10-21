@@ -1,6 +1,9 @@
 # Zephyr-Ma-pipeline
 Lossless, audit-first pipeline that turns raw BvD Zephyr M&amp;A exports into a deal-level research database (CSV + Stata .dta). Every merge key is explicit; every dropped row is logged.
 
+## Repository layout
+
+```text
 .
 ├── config.py                     # shared paths (ZEPHYR_BASE, BASE_DIR, …)
 ├── data/
@@ -22,7 +25,8 @@ Lossless, audit-first pipeline that turns raw BvD Zephyr M&amp;A exports into a 
 │       ├── 05_deal_firm_filtered.csv
 │       ├── 06a_merge_comment_vendor.csv
 │       ├── 06b_text_peer.csv
-│       └── 07_full_sample.csv / .dta
+│       ├── 07_full_sample.csv
+│       └── 07_full_sample.dta
 ├── scripts/
 │   ├── 01a_clean_structure_date.py
 │   ├── 01a_clean_industry.py
@@ -40,11 +44,15 @@ Lossless, audit-first pipeline that turns raw BvD Zephyr M&amp;A exports into a 
 │   ├── 06b_text_peer_multiple.py
 │   └── 07_full_sample.py
 └── logs/                         # per-stage *.txt diagnostics
+```
 
-Requirements
-    pandas>=2.0
-    numpy>=1.24
-    pyreadstat>=1.2
-    gensim>=4.3
-    tqdm>=4.65
-    stanfordcorenlp>=3.9        # optional — vendor NER stage only
+## Requirements
+
+```text
+pandas          >= 2.0
+numpy           >= 1.24
+pyreadstat      >= 1.2      # write Stata .dta (stage 07)
+gensim          >= 4.3      # Doc2Vec text embeddings (stage 06b)
+tqdm            >= 4.65     # progress bars (stage 06b)
+stanfordcorenlp >= 3.9      # optional — vendor NER (stage 01b)
+```
