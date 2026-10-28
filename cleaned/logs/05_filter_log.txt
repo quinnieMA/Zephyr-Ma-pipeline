@@ -3,15 +3,31 @@
 05_sample_filter.py — v7
 ==============================================================================
 input : D:\MA\data\merged\04_deal_firm_full.csv
-period: 1997-2025   year from announced_d
+period: 1997-2024   year from announced_d
 outcome: completed_strict（主） / completed_flag（对比）
 
 ==============================================================================
 STEP 1 — Load
 ==============================================================================
-Rows: 1,066,213 | Columns: 156
+Rows: 1,066,213 | Columns: 158
 _row_id check PASSED: 0 .. 1066212
 deal_num: 1,066,213 unique / 1,066,213 rows
+
+==============================================================================
+STEP 1b — Country-level stock-traded-GDP merge
+==============================================================================
+  country file: D:\MA\raw\Country_level\world_stock_traded_gdp_ratio_1970_2025.csv
+  Raw shape: 50 rows x 103 cols | year 1975-12-31 ~ 2024-12-31
+  After reshape: 5,100 rows | 102 countries | 50 years
+    CN: 50 year-rows
+    GB: 50 year-rows
+    US: 50 year-rows
+    JP: 50 year-rows
+    KR: 50 year-rows
+  M1 合并年份来源: completed_d_yr=0 | announced_d_yr=0 | deal_year=897,698 | 缺失 168,515
+  stock_traded_gdp_tar 匹配: 796,231/1,066,213 (74.7%)
+  stock_traded_gdp_acq 匹配: 759,128/1,066,213 (71.2%)
+  行数不变: 1,066,213 == 1,066,213
 
 ==============================================================================
 STEP 2 — Pre-filter variable preparation [full dataset]
@@ -66,42 +82,75 @@ Input: 1,066,213 rows
       [start] p_A=0.0693  pD_strict=0.6126  pD_wide=0.8171  p_B=0.1101
 
   [SOURCE] deal_type 使用列 = 'deal_type_all'  (建议 04 白名单补 'deal_type')
-  F4 (sample period 1997-2025, year from announced_d)
-      dropped  195,721  ->   870,492 remaining
-      [after F4] p_A=0.0829  pD_strict=0.7301  pD_wide=0.9775  p_B=0.1103
-      stake 缺失 100,494；从 deal_type_all 插补成功 69,594
+  F2 (tar_listed = 0)
+      dropped  146,262  ->   919,951 remaining
+      [after F2] p_A=0.0610  pD_strict=0.6455  pD_wide=0.8712  p_B=0.0806
+  F3 (drop public-offer structures, src=deal_struct_all)
+      dropped    5,026  ->   914,925 remaining
+      [after F3] p_A=0.0603  pD_strict=0.6454  pD_wide=0.8716  p_B=0.0799
+  F4 (sample period 1997-2024, year from announced_d)
+      dropped  165,419  ->   749,506 remaining
+      [after F4] p_A=0.0686  pD_strict=0.7288  pD_wide=0.9899  p_B=0.0760
+      stake 缺失 86,315；从 deal_type_all 插补成功 59,771
   F6 (stake >= 50.0%, impute if missing)
-      dropped  101,286  ->   769,206 remaining
-      [after F6] p_A=0.0789  pD_strict=0.7328  pD_wide=0.9783  p_B=0.0919
+      dropped   70,564  ->   678,942 remaining
+      [after F6] p_A=0.0684  pD_strict=0.7353  pD_wide=0.9896  p_B=0.0697
   F7 (deal_value >= 1000.0 th USD = USD 1M)
-      dropped  528,104  ->   241,102 remaining
-      [after F7] p_A=0.1477  pD_strict=0.6509  pD_wide=0.9557  p_B=0.2587
+      dropped  481,841  ->   197,101 remaining
+      [after F7] p_A=0.1237  pD_strict=0.6408  pD_wide=0.9787  p_B=0.2063
   F8 (tar/acq SIC3 & country all available)
-      dropped   14,853  ->   226,249 remaining
-      [after F8] p_A=0.1467  pD_strict=0.6498  pD_wide=0.9552  p_B=0.2632
+      dropped   11,547  ->   185,554 remaining
+      [after F8] p_A=0.1211  pD_strict=0.6383  pD_wide=0.9788  p_B=0.2104
+
+[DIAG] F8 后 stock/GDP 缺失: 12,825 / 185,554 (6.9%)
+[DIAG] tar 国家缺失率 top15:
+                  mean  size
+tar_country_code            
+AD                 1.0     1
+AG                 1.0    10
+AI                 1.0    13
+AL                 1.0    34
+AO                 1.0    10
+AM                 1.0    40
+AW                 1.0     5
+AZ                 1.0    13
+GN                 1.0    11
+GM                 1.0     1
+BA                 1.0    43
+BF                 1.0    13
+BN                 1.0    21
+BO                 1.0    35
+BJ                 1.0     3
+  F12 (stock_traded_gdp tar & acq available)
+      dropped   12,825  ->   172,729 remaining
+      [after F12] p_A=0.1247  pD_strict=0.6455  pD_wide=0.9794  p_B=0.2229
 
 ==============================================================================
 STEP 4 — Post-filter variable construction
 ==============================================================================
-cross_industry =1: 143,996  (NaN 0)
-ln_deal_value non-null: 226,249
+
+==============================================================================
+STEP 4 — Post-filter variable construction
+==============================================================================
+cross_industry =1: 109,051  (NaN 0)
+ln_deal_value non-null: 172,729
 cross_border 重算：与 04 原有值不一致 0 行  (0 = 完全一致)
-cross_border  =1: 62,160
-tar_age non-null: 130,786  acq_age non-null: 182,221
+cross_border  =1: 43,004
+tar_age non-null: 95,108  acq_age non-null: 143,532
 
 Payment method distribution:
-  cash      N= 86,600  38.3%
-  shares    N= 18,842   8.3%
-  debt      N=  7,518   3.3%
-  other     N=  6,012   2.7%
-  mix       N= 51,357  22.7%
-  unknown   N= 55,920  24.7%
+  cash      N= 63,540  36.8%
+  shares    N= 11,721   6.8%
+  debt      N=  6,003   3.5%
+  other     N=  5,139   3.0%
+  mix       N= 39,265  22.7%
+  unknown   N= 47,061  27.2%
 
 ==============================================================================
 STEP 5 — Save
 ==============================================================================
 Saved -> D:\MA\data\merged\05_deal_firm_filtered.csv
-  rows=226,249 | cols=172 | unique deal_num=226,249
+  rows=172,729 | cols=177 | unique deal_num=172,729
 Steps CSV -> D:\MA\data\merged\05_filter_steps.csv
 
 ==============================================================================
@@ -109,10 +158,10 @@ FINAL — 结果变量变异
 ==============================================================================
   column                    mean       N(1)       N(0)
   ----------------------------------------------------
-  completed_strict        0.6498    147,015     79,234
-  completed_flag          0.9552    216,121     10,128
+  completed_strict        0.6455    111,496     61,233
+  completed_flag          0.9794    169,165      3,564
       [!!] 几乎无变异，不宜作结果变量
-  rumor_jfe               0.1467     33,192    193,057
+  rumor_jfe               0.1247     21,540    151,189
 
   论文参照 p_D = 0.6568
 
@@ -120,11 +169,14 @@ FINAL — 结果变量变异
 FILTER LOG SUMMARY
 ==============================================================================
 Input : 04_deal_firm_full.csv  1,066,213 rows
-Year  : announced_d 优先, period 1997-2025
+Year  : announced_d 优先, period 1997-2024
 
-F4 (sample period 1997-2025, year from announced_d) : dropped 195,721  -> 870,492 left  (cum 195,721)
-F6 (stake >= 50.0%, impute if missing)              : dropped 101,286  -> 769,206 left  (cum 297,007)
-F7 (deal_value >= 1000.0 th USD = USD 1M)           : dropped 528,104  -> 241,102 left  (cum 825,111)
-F8 (tar/acq SIC3 & country all available)           : dropped  14,853  -> 226,249 left  (cum 839,964)
+F2 (tar_listed = 0)                                 : dropped 146,262  -> 919,951 left  (cum 146,262)
+F3 (drop public-offer structures, src=deal_struct_al: dropped   5,026  -> 914,925 left  (cum 151,288)
+F4 (sample period 1997-2024, year from announced_d) : dropped 165,419  -> 749,506 left  (cum 316,707)
+F6 (stake >= 50.0%, impute if missing)              : dropped  70,564  -> 678,942 left  (cum 387,271)
+F7 (deal_value >= 1000.0 th USD = USD 1M)           : dropped 481,841  -> 197,101 left  (cum 869,112)
+F8 (tar/acq SIC3 & country all available)           : dropped  11,547  -> 185,554 left  (cum 880,659)
+F12 (stock_traded_gdp tar & acq available)          : dropped  12,825  -> 172,729 left  (cum 893,484)
 
-Final sample : 226,249 rows | 226,249 unique deals
+Final sample : 172,729 rows | 172,729 unique deals
