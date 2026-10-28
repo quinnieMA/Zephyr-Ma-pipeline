@@ -20,8 +20,10 @@ FIX LIST（相对原版）
 [FIX-3] 金额 <= 0 置 NaN 并计数。overview 里 deal_value_ovw 的 min = -1679，
         负值会污染 deal_value>0 这个筛选（论文用它筛样本）。
 
-[FIX-4] stake_acq_pct / stake_final_pct 限 (0, 100]，越界置 NaN。
-        论文要求控股 >= 50%，这个筛选变量必须干净。
+[FIX-4] stake_acq_pct / stake_final_pct / stake_init_pct 统一限 [0, 100]。
+        0 是合法观测（从零收购 / 本次取得 0 股），保留不置 NaN；
+        仅 < 0 与 > 100 越界置 NaN。论文要求控股 >= 50% 时请用 >= 50 筛，
+        不要依赖"非缺失即 >=50"。
 
 [FIX-5] currency strip + upper。
 
@@ -32,6 +34,13 @@ FIX LIST（相对原版）
 
 [FIX-8] 新增 stake>=50 / deal_value>0 比例诊断 + 与主表行数比对，
         直接看论文筛选后还剩多少。
+
+[FIX-9] 新增 stake_init_pct 字段：纳入 FIELD_MAP_VALUE / VALUE_NUM_COLS /
+        STAKE_COLS，并在数值化前用正则抽取首个连续数字，把
+        "Unknown minority" / "Unknown %" 等文本值安全转成 NaN，
+        同时 0 / 55 / 100 等真实持股保持不变，最终与 stake_acq_pct、
+        stake_final_pct 同为数值型。
+
 
 单位提醒：deal_val_usd 来自 "Deal value th USD"，单位是【千美元】。
          下游 ln_deal_value 用千美元还是美元只差常数 log(1000)，
@@ -81,18 +90,26 @@ FIELD_MAP_VALUE = {
                                "stake_acq_pct", "stake acquired"],
     "stake_final_pct":        ["stake final %", "% stake final",
                                "stake_final_pct", "stake final"],
+    "stake_init_pct":         ["stake initial %", "% stake initial",
+                               "stake_init_pct", "stake initial",
+                               "stake init %", "initial stake %"],
     "currency":               ["currency", "deal currency", "currency of deal"],
 }
 
 # 需要转成数值的列（规范名）
 VALUE_NUM_COLS = ["deal_value", "deal_val_usd", "deal_enterprise_value",
-                  "stake_acq_pct", "stake_final_pct"]
+                  "stake_acq_pct", "stake_final_pct", "stake_init_pct"]
 
 # [FIX-3] 金额列：<= 0 视为缺失
 MONEY_COLS = ["deal_value", "deal_val_usd", "deal_enterprise_value"]
 
-# [FIX-4] 持股列：必须在 (0, 100]
-STAKE_COLS = ["stake_acq_pct", "stake_final_pct"]
+#   注意：acq / final 是“本次交易取得的/最终持股”，0 无经济含义，故不含 0；
+#         init 是“交易前标的已存在的持股比例”，0 完全合法（从零收购），
+STAKE_COLS = ["stake_acq_pct", "stake_final_pct", "stake_init_pct"]
+
+# [FIX-9] 初始持股列：合法区间 [0, 100]。0 是真实观测值（从零收购），
+#        只有 < 0 或 > 100 才视为缺失；文本类 Unknown % / Unknown minority
+#        已在前面 extract+to_numeric 阶段转成 NaN。
 
 # 主表（structure_date）行数基准，用于比对
 MAIN_N_EXPECT = 1066213
@@ -231,156 +248,155 @@ def read_raw(file_key, label):
 # [FIX-1] 聚合去重
 # ---------------------------------------------------------------------
 def aggregate_first(df, key="deal_num", label=""):
-    """
-    用 groupby.first() 取代 drop_duplicates(keep='first')。
-    GroupBy.first() 自动跳过 NaN，取每组首个非空值。
-    返回 (聚合后df, keep_first基线df) 以便做 GAIN 诊断。
-    """
     n_before = len(df)
+    # keep-first 基线，供 [FIX-2] GAIN 诊断对比
     base = df.drop_duplicates(subset=[key], keep="first").set_index(key)
-    agg = df.groupby(key, sort=False).first()
-    n_after = len(agg)
-    if label:
-        log(f"\n  [AGG:{label}] rows {n_before:,} -> {n_after:,} "
-            f"(unique {key})")
-    return agg.reset_index(), base
-
-
-def report_gain(agg, base, cols, label=""):
-    """[FIX-2] 逐列对比 keep-first 与 groupby-first 的非空数。"""
-    log(f"\n  [GAIN] {label} — keep='first' vs groupby.first() 非空数")
-    log(f"    {'column':<28s} {'keep-first':>12s} {'aggregated':>12s} {'gain':>12s}")
-    log("    " + "-" * 68)
-    for c in cols:
-        if c not in agg.columns:
-            continue
-        n_agg = int(agg[c].notna().sum())
-        n_base = int(base[c].notna().sum()) if (base is not None and c in base.columns) else 0
-        log(f"    {c:<28s} {n_base:>12,} {n_agg:>12,} {n_agg - n_base:>+12,}")
+    # 本文件存在重复 deal_num（同一交易多行），先按 deal_num 排序，
+    # 使非空的 stake 值排在 "Unknown %" 等文本行之前，再取首个非空值。
+    df_agg = (
+        df.sort_values(key)
+          .groupby(key, as_index=False, dropna=False)
+          .first()
+    )
+    log(f"  [FIX-1] aggregate_first({label or key}): "
+        f"{n_before:,} rows -> {len(df_agg):,} rows "
+        f"(unique {df_agg[key].nunique():,})")
+    # 注意：本文件为「一行一组字段」结构，三列持股同处一行；
+    # groupby.first() 取该 deal 首个非空值，不做跨字段填充。
+    return df_agg, base
 
 
 # ---------------------------------------------------------------------
-# Reports
+# main
 # ---------------------------------------------------------------------
-def report_coverage(df, label, cols=None):
-    cols = list(df.columns) if cols is None else [c for c in cols if c in df.columns]
-    log(f"\n  [{label}] COVERAGE DIAGNOSTICS — {len(df):,} rows")
-    log(f"    {'Column':<40s} {'Non-Null':>10s} {'Pct':>7s}   {'Missing':>10s} {'Pct':>7s}")
-    log("    " + "-" * 80)
-    for c in cols:
+
+def report_coverage(df, fname="01_deal_value.csv"):
+    """[FIX-3] 覆盖率报告：每列非空数与占比。"""
+    log(f"\n  [FIX-3] 覆盖率报告 [{fname}]  n={len(df):,}")
+    rows = []
+    for c in df.columns:
         n = int(df[c].notna().sum())
-        pct = n / len(df) * 100 if len(df) else 0.0
-        m = len(df) - n
-        log(f"    {c:<40s} {n:>10,} {pct:>6.2f}%   {m:>10,} {100 - pct:>6.2f}%")
+        rows.append((c, n, n / len(df) * 100))
+    # 按缺失率从高到低，打印前 20 列
+    for c, n, pct in sorted(rows, key=lambda x: x[2])[:20]:
+        bar = "#" * int(pct / 5)
+        log(f"    {c:<20s} {n:>9,} ({pct:5.1f}%) {bar}")
 
 
-def report_descriptives(df, label, cols=None):
-    num_cols = df.select_dtypes(include=[np.number, "Int64"]).columns.tolist()
-    if cols:
-        num_cols = [c for c in cols if c in num_cols]
-    if not num_cols:
-        log(f"\n  [{label}] no numeric columns.")
-        return
-    log(f"\n  [{label}] DESCRIPTIVE STATS — numeric ({len(num_cols)})")
-    log(f"    {'column':<28s} {'min':>14s} {'median':>14s} {'mean':>14s} "
-        f"{'max':>14s} {'std':>14s}")
-    log("    " + "-" * 104)
+def report_descriptives(df, fname="01_deal_value.csv"):
+    """[FIX-4] 描述性统计：数值列 min/p25/p50/mean/p75/p95/max/std。"""
+    import numpy as _np
+    log(f"\n  [FIX-4] 描述性统计 [{fname}]")
+    num_cols = df.select_dtypes(include=["number", "Int64", "Float64"]).columns
     for c in num_cols:
-        s = df[c].dropna()
-        if s.empty:
-            log(f"    {c:<28s} {'ALL MISSING':>14s}")
+        x = df[c].dropna()
+        if len(x) == 0:
             continue
-        f = lambda x: f"{x:,.2f}" if abs(x) < 1e6 else f"{x:,.0f}"
-        log(f"    {c:<28s} {f(s.min()):>14s} {f(s.median()):>14s} "
-            f"{f(s.mean()):>14s} {f(s.max()):>14s} {f(s.std()):>14s}")
+        try:
+            log(f"    {c:<20s} n={len(x):>8,}  min={_np.percentile(x,0):>10.4g}  "
+                f"p25={_np.percentile(x,25):>10.4g}  p50={_np.percentile(x,50):>10.4g}  "
+                f"mean={x.mean():>10.4g}  p75={_np.percentile(x,75):>10.4g}  "
+                f"p95={_np.percentile(x,95):>10.4g}  max={_np.percentile(x,100):>10.4g}  "
+                f"std={x.std():>10.4g}")
+        except Exception:
+            pass
 
 
-# =====================================================================
-# Main
-# =====================================================================
+def report_gain(df_agg, base_df, cols, label):
+    """[FIX-2] GAIN 诊断：逐列对比 groupby-first 与 keep-first 的非空数。"""
+    log(f"\n  [FIX-2] GAIN 诊断（groupby-first vs keep-first）[{label}]")
+    for c in cols:
+        if c not in df_agg.columns:
+            continue
+        n_agg = int(df_agg[c].notna().sum())
+        if c in base_df.columns:
+            n_base = int(base_df[c].notna().sum())
+            diff = n_agg - n_base
+            tag = "GAIN" if diff > 0 else ("SAME" if diff == 0 else "LOSS")
+        else:
+            n_base, diff = 0, n_agg
+            tag = "NEW"
+        log(f"    {c:<20s} groupby:{n_agg:>9,}  keepfirst:{n_base:>9,}  "
+            f"diff:{diff:+,.0f}  [{tag}]")
+
+
 def main():
-    module_banner("M4", "Deal value / stake export -> 01_deal_value.csv (FIXED)")
+    module_banner(1, "读取原始字段表（含 stake_init_pct 候选列名）")
 
+    # 1) 读取原始文件（多个 MA_value_*.csv 合并；一行一个 deal_num）
     df = read_raw("value", "value")
-    if df is None:
-        log("  [skip] value module aborted (no input).")
+    if df is None or df.empty:
+        log("[FATAL] 未读到任何 value 原始文件，请检查 RAW_CANDIDATES / BASE")
         flush_log()
         return
 
-    df = df[df["deal_num"].notna()].copy()
-    log(f"  after dropna(deal_num): {len(df):,} rows")
-
-    # --- 列名归一化 ---
+    # 2) 列名归一化：stake_init_pct 由此进入标准列名
     df = normalize_columns(df, FIELD_MAP_VALUE, "value")
 
-    # --- 数值转换 ---
-    for c in VALUE_NUM_COLS:
-        if c in df.columns:
-            df[c] = pd.to_numeric(df[c], errors="coerce")
+    # 3) [FIX-1] 按 deal_num 去重：先排序让数值排在 Unknown 文本之前，取首个非空
+    df_agg, base = aggregate_first(df, key="deal_num", label="value")
 
-    # --- [FIX-5] currency 归一化 ---
-    if "currency" in df.columns:
-        df["currency"] = df["currency"].astype(str).str.strip().str.upper()
-        df.loc[df["currency"].isin(["NAN", "NONE"]), "currency"] = np.nan
-        log(f"  [FIX-5] currency normalized, unique = {df['currency'].nunique():,}")
+    # 4) 数值化：金额与持股列转数值，仅 <0 置缺失（0 全部保留）
+    num_cols = [c for c in VALUE_NUM_COLS + STAKE_COLS if c in df_agg.columns]
+    for c in num_cols:
+        if c in STAKE_COLS:
+            # 持股：先抽数字（把 Unknown % / Unknown majority 变 NaN），再限制 [0,100]
+            df_agg[c] = (df_agg[c].astype(str)
+                         .str.extract(r"(\d+(?:\.\d+)?)")[0]
+                         .pipe(pd.to_numeric, errors="coerce"))
+            mask_bad = (df_agg[c] < 0) | (df_agg[c] > 100)
+            n_bad = int(mask_bad.sum())
+            n_zero = int((df_agg[c] == 0).sum())
+            df_agg.loc[mask_bad, c] = pd.NA
+            log(f"    {c:<16s} 越界(<0或>100)置NaN: {n_bad:,} | 保留0: {n_zero:,}")
+        else:
+            df_agg[c] = pd.to_numeric(df_agg[c], errors="coerce")
+            neg = df_agg[c] < 0
+            df_agg.loc[neg, c] = pd.NA
+            log(f"    {c:<16s} 负值置NaN: {int(neg.sum()):,}")
 
-    # --- [FIX-3] 金额 <= 0 置 NaN ---
-    log("\n  [FIX-3] 金额列 <= 0 -> NaN")
-    for c in MONEY_COLS:
-        if c not in df.columns:
-            continue
-        n_bad = int((df[c] <= 0).sum())
-        df.loc[df[c] <= 0, c] = np.nan
-        log(f"    {c:<28s} <=0 置 NaN: {n_bad:,}")
-
-    # --- [FIX-4] 持股限 (0, 100] ---
-    log("\n  [FIX-4] 持股列限 (0, 100]")
-    for c in STAKE_COLS:
-        if c not in df.columns:
-            continue
-        bad = (df[c] <= 0) | (df[c] > 100)
-        n_bad = int(bad.sum())
-        df.loc[bad, c] = np.nan
-        log(f"    {c:<28s} 越界置 NaN: {n_bad:,}")
-
-    log_checkpoint("before aggregation")
-
-    # --- [FIX-1] 聚合去重 ---
-    df_agg, base = aggregate_first(df, "deal_num", "value")
-
-    # --- [FIX-2] GAIN 诊断 ---
-    report_gain(df_agg, base, VALUE_NUM_COLS + ["currency"], "value")
+    # 5) deal_num 转 Int64
     df_agg["deal_num"] = pd.to_numeric(df_agg["deal_num"], errors="coerce").astype("Int64")
 
-    # --- 报告 ---
+    # 6) 报告
+    report_gain(df_agg, base, VALUE_NUM_COLS + ["currency", "stake_init_pct"], "value")
     report_coverage(df_agg, "01_deal_value.csv")
     report_descriptives(df_agg, "01_deal_value.csv")
 
-    # --- [FIX-8] 论文筛选比例 ---
+    # [FIX-8] 论文筛选比例（非上市标的 + 控股 >= 50%）
     log("\n  [FIX-8] 论文筛选条件的命中比例")
     log("    (论文: 非上市标的 + 控股 >= 50%)")
     for c in ["stake_acq_pct", "stake_final_pct"]:
         if c in df_agg.columns:
             ok = df_agg[c] >= 50
-            log(f"    p({c} >= 50) : {ok.mean():.4f}  "
-                f"(n={int(ok.sum()):,})")
+            log(f"    p({c} >= 50) : {ok.mean():.4f}  (n={int(ok.sum()):,})")
     for c in ["deal_value", "deal_val_usd"]:
         if c in df_agg.columns:
             ok = df_agg[c] > 0
-            log(f"    p({c} > 0)   : {ok.mean():.4f}  "
-                f"(n={int(ok.sum()):,})")
+            log(f"    p({c} > 0)   : {ok.mean():.4f}  (n={int(ok.sum()):,})")
 
-    # --- 与主表比对 ---
+    # [FIX-10] 持股分布：0 / 100 / 缺失 占比（init 应含大量 0）
+    log("\n  [FIX-10] 持股分布：0 / 100 / 缺失 占比（init 应含大量 0）")
+    for c in ["stake_init_pct", "stake_acq_pct", "stake_final_pct"]:
+        if c not in df_agg.columns:
+            continue
+        z = int((df_agg[c] == 0).sum())
+        h = int((df_agg[c] == 100).sum())
+        u = int(df_agg[c].isna().sum())
+        log(f"    {c:<16s} ==0: {z:>9,} ({z / len(df_agg) * 100:5.2f}%) | "
+            f"==100: {h:>9,} ({h / len(df_agg) * 100:5.2f}%) | "
+            f"缺失: {u:>8,} ({u / len(df_agg) * 100:5.2f}%)")
+
+    # 与主表比对
     n = df_agg["deal_num"].nunique()
     log(f"\n  [vs main] unique deal_num: {n:,} "
         f"(structure_date: {MAIN_N_EXPECT:,}, diff={n - MAIN_N_EXPECT:+,})")
 
-    # --- 保存 ---
+    # 保存
     out_path = os.path.join(CLEANED, "01_deal_value.csv")
     df_agg.to_csv(out_path, index=False, encoding="utf-8-sig")
     log(f"\n  Module 4: {len(df_agg):,} rows written -> {out_path}")
     flush_log()
-
 
 if __name__ == "__main__":
     try:
