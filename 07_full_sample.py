@@ -1,14 +1,24 @@
 # -*- coding: utf-8 -*-
 """
-07_full_sample.py — v6
-CHANGES vs v5:
-  - 倍数识别只用 '_mul_' 关键词，不看后缀（_ly/_fy 是用户自己的缩写，不是信号）
-  - _x 与 _y 倍数列全部保留、全部缩尾、全部进白名单（不二选一）
-  - 不再对 _x/_y 重名列报警（保留双列是用户明确要求的）
-  - 每个倍数打印 raw p1/p5/p50/p95/max -> clip -> winsor 全链条
-  - 日志无条件刷盘（finally）
+07_full_sample_v7.py  ——  已修复 Stata 变量名合规问题
+================================================================================
+合并 06a(comment+vendor) + 06b(text peer) -> 07_full_sample-JFE.csv / .dta
+- 06a/06b 的 multiple 列全部保留 (_x=06a原始, _y=06b缩尾), 不缩尾, 只取 ln
+- ln_*_size 与 ln_deal_value 等 ln 类变量不缩尾 (ln 变换已消除量纲/偏态)
+- safe_ratio 加 min_den 保护, 防 EQ<=0 导致杠杆率爆炸
+- 日志无条件刷盘 (finally)
+- 【v7.1 修复】导出 .dta 前将所有列名转为 Stata 合法名:
+    首字符必须为字母 -> '_year_source' 等下划线开头列加 's_' 前缀;
+    非法字符替换为 '_'; 截断到 32 字符; 同时同步 value_labels 的 key。
+================================================================================
 """
-import os, time, datetime, traceback, warnings
+import os
+import re
+import time
+import datetime
+import traceback
+import warnings
+
 import numpy as np
 import pandas as pd
 import pyreadstat
@@ -20,25 +30,72 @@ MERGED = os.path.join(BASE, "merged")
 F_06A = os.path.join(MERGED, "06a_merge_comment_vendor.csv")
 F_06B = os.path.join(MERGED, "06b_text_peer.csv")
 
-OUT_CSV       = os.path.join(MERGED, "07_full_sample.csv")
-OUT_DTA       = os.path.join(MERGED, "07_full_sample.dta")
-OUT_LOG       = os.path.join(MERGED, "07_full_sample_log.txt")
-OUT_STEPS     = os.path.join(MERGED, "07_full_sample_steps.csv")
-OUT_VAR_CHECK = os.path.join(MERGED, "07_var_check.csv")
+OUT_CSV       = os.path.join(MERGED, "07_full_sample-JFE.csv")
+OUT_DTA       = os.path.join(MERGED, "07_full_sample-JFE.dta")
+OUT_LOG       = os.path.join(MERGED, "07_full_sample_log-JFE.txt")
+OUT_STEPS     = os.path.join(MERGED, "07_full_sample_steps-JFE.csv")
+OUT_VAR_CHECK = os.path.join(MERGED, "07_var_check-JFE.csv")
 
 DEAL = "deal_num"
-WINSOR_LO, WINSOR_HI = 0.05, 0.95
+WINSOR_LO, WINSOR_HI = 0.05, 0.95      # 当前启用; 改这里即可
 P_CEIL = 1e9
 
-# 仅剔除与 06a 语义重复的日期列；倍数列（含 _x/_y）一律保留
+# 仅剔除与 06a 语义重复的日期列; 倍数列一律保留
 DROP_FROM_06B = {"deal_date", "deal_year", "announced_d", "completed_d", "rumour_d"}
 
+# ln 类 / 比率类: 绝对不缩尾 (ln 变换已完成, 比率有天然上界)
+NO_WINSOR = {
+    "ln_tar_size", "ln_acq_size", "ln_tar_post_size", "ln_acq_post_size",
+    "ln_rel_size", "ln_deal_value", "ln_days",
+    "ln_mul_rev", "ln_mul_ebitda", "ln_mul_ebit", "ln_mul_pbt",
+    "ln_mul_ta", "ln_mul_eq", "ln_mul_pat", "ln_mul_np", "ln_mul_na",
+    "ln_mul_cl", "ln_mul_cap",
+}
+
+# ------------------------------------------------------------------ #
+#  Stata 变量名合规化: 首字符必须为字母 (A-Za-z), 其余仅允许 字母/数字/_
+# ------------------------------------------------------------------ #
+_STATA_ILLEGAL = re.compile(r"[^A-Za-z0-9_]+")
+
+
+def stata_varname(name):
+    """把任意列名转成 Stata 合法变量名: 首字符非字母则加 's_' 前缀,
+    中间非法字符替换为 '_', 并截断到 Stata 上限 32 字符。"""
+    s = str(name)
+    if not s[:1].isalpha():
+        s = "s_" + s
+    s = _STATA_ILLEGAL.sub("_", s).strip("_")
+    if not s[:1].isalpha():          # 极端情况兜底
+        s = "v_" + s
+    return s[:32]
+
+
+def build_rename_map(columns):
+    """为一组列名构造 rename 字典, 并处理加前缀后可能产生的重名。"""
+    out, used = {}, {}
+    for c in columns:
+        new = stata_varname(c)
+        if new in used:
+            used[new] += 1
+            new = f"{new}_{used[new]}"
+        else:
+            used[new] = 0
+        out[c] = new
+    return out
+
+
+# ------------------------------------------------------------------ #
+#  通用工具函数 (原样保留)
+# ------------------------------------------------------------------ #
 log_lines, steps = [], []
 _T0 = time.time()
 START_TIME = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
+
 def log(msg):
-    log_lines.append(msg); print(msg)
+    log_lines.append(msg)
+    print(msg)
+
 
 def flush_log():
     try:
@@ -48,27 +105,38 @@ def flush_log():
     except Exception as e:
         print(f"[LOG FAIL] {e}")
 
+
 def pct(n, d):
     return f"{n/d*100:.1f}%" if d else "n/a"
 
+
 def banner(t):
-    log("\n" + "=" * 78); log(t); log("=" * 78)
+    log("\n" + "=" * 78)
+    log(t)
+    log("=" * 78)
+
 
 def add_step(name, n, note=""):
     steps.append({"step": name, "time_elapsed_sec": round(time.time()-_T0, 2),
                   "row_count": n, "note": note,
                   "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")})
 
+
 def winsorise(s, lo=None, hi=None):
     s = s.copy()
-    if lo is not None: s = s.clip(lower=s.quantile(lo))
-    if hi is not None: s = s.clip(upper=s.quantile(hi))
+    if lo is not None:
+        s = s.clip(lower=s.quantile(lo))
+    if hi is not None:
+        s = s.clip(upper=s.quantile(hi))
     return s
 
+
 def safe_ratio(num, den, min_den=0.0):
+    """min_den 保护: EQ<=0 时杠杆率不计算, 防爆炸"""
     n = pd.to_numeric(num, errors="coerce")
     d = pd.to_numeric(den, errors="coerce")
     return np.where(d.notna() & (d > min_den), n / d, np.nan)
+
 
 def safe_get(df, col, warn=True):
     if col in df.columns:
@@ -76,6 +144,7 @@ def safe_get(df, col, warn=True):
     if warn:
         log(f"    [MISS] {col} -> 全 NaN")
     return pd.Series(np.nan, index=df.index)
+
 
 def parse_date_robust(s):
     if s is None:
@@ -93,6 +162,7 @@ def parse_date_robust(s):
         out.loc[rest] = pd.to_datetime(s.loc[rest], errors="coerce",
                                        infer_datetime_format=True)
     return out
+
 
 LEGAL_ORIGIN = {
     "AU": "English", "CA": "English", "GH": "English", "HK": "English",
@@ -142,18 +212,19 @@ CLASSIFICATION_DIST = {
     "CN": 4,
 }
 _VENDOR_OLD2NEW = {
-    "family_person":           "individual_natural",
-    "shareholders_undisclosed":"shareholder_group",
+    "family_person":            "individual_natural",
+    "shareholders_undisclosed": "shareholder_group",
 }
 
+
 def main():
-    banner("07_full_sample.py — v6")
+    banner("07_full_sample_v7.py  (v7.1: Stata 变量名合规化)")
     log(f"started : {START_TIME}")
     log(f"主键    : {DEAL}")
     log(f"06a     : {F_06A}")
     log(f"06b     : {F_06B}")
     log(f"日志文件: {OUT_LOG}")
-    log(f"倍数策略: 保留 _x(06a 原始) 与 _y(06b 缩尾) 全部倍数列，均缩尾，均进白名单")
+    log(f"缩尾    : [{WINSOR_LO},{WINSOR_HI}]  不缩尾清单 {len(NO_WINSOR)} 个 ln/比率类")
 
     # ── STEP 1 ──
     banner("STEP 1 — 载入 06a")
@@ -162,7 +233,8 @@ def main():
     assert df[DEAL].nunique() == n06a
     if "_row_id" in df.columns:
         assert df["_row_id"].is_monotonic_increasing
-    ven_in_06a = [c for c in df.columns if 'ven' in c.lower() or 'vendor' in c.lower()]
+    ven_in_06a = [c for c in df.columns
+                  if "ven" in c.lower() or "vendor" in c.lower()]
     log(f"  rows={n06a:,}  cols={df.shape[1]}  unique_deal={df[DEAL].nunique():,}")
     log(f"  vendor 相关列({len(ven_in_06a)}): {ven_in_06a}")
     add_step("load_06a", n06a)
@@ -196,13 +268,7 @@ def main():
 
     x_cols = sorted([c for c in df.columns if c.endswith("_x")])
     y_cols = sorted([c for c in df.columns if c.endswith("_y")])
-    if x_cols or y_cols:
-        log(f"  [INFO] 保留重名列: _x={len(x_cols)} 个（06a 原始倍数，未缩尾），"
-            f"_y={len(y_cols)} 个（06b 已缩尾）")
-        log(f"         _x: {x_cols}")
-        log(f"         _y: {y_cols}")
-    else:
-        log(f"  [OK] 无 _x/_y 重名列")
+    log(f"  [INFO] _x={len(x_cols)} 个（06a 原始）  _y={len(y_cols)} 个（06b 缩尾），均保留")
 
     for c in peer_cols:
         if c not in df.columns:
@@ -212,19 +278,14 @@ def main():
         log(f"    {c:<26} non-null={nn:,} ({pct(nn,len(df))})")
     add_step("merge_06b", len(df))
 
-    # ── STEP 4 倍数（_x 仅缩尾一次；_y 06b 已缩尾，不碰） ──
-# ── STEP 4 倍数：_x / _y 均原样保留，只取 ln ──
-    banner("STEP 4 — 倍数处理（_x / _y 均不缩尾，原样保留）")
-    
-    # 识别规则：只看 '_mul_'，后缀 _ly/_fy 是用户缩写，不作为信号
+    # ── STEP 4 倍数：_x/_y 均原样保留，只取 ln，不缩尾 ──
+    banner("STEP 4 — 倍数处理（_x/_y 均不缩尾，只取 ln）")
     MUL_ALL = [c for c in df.columns if "_mul_" in c]
     MUL_ALL.sort(key=lambda x: (0 if x.startswith("pre_") else
-                               1 if x.startswith("post_") else
-                               2 if x.startswith("bench_") else 3, x))
+                                1 if x.startswith("post_") else
+                                2 if x.startswith("bench_") else 3, x))
     log(f"  识别到倍数列({len(MUL_ALL)}): {MUL_ALL}")
-    log(f"  处理规则: _x(06a 原始) 与 _y(06b) 均不缩尾，原样保留")
-    log(f"  缩尾参数 [{WINSOR_LO},{WINSOR_HI}] 本次不使用，留待后续手动处理")
-    
+
     for c in MUL_ALL:
         s = pd.to_numeric(df[c], errors="coerce")
         n_raw = s.notna().sum()
@@ -232,74 +293,64 @@ def main():
             log(f"    [SKIP] {c:<28} 全空")
             continue
         if c.endswith("_x"):
-            tag = "_x = 06a 原始（不缩尾）"
+            tag = "_x = 06a 原始"
         elif c.endswith("_y"):
-            tag = "_y = 06b（不缩尾）"
+            tag = "_y = 06b 缩尾"
         else:
-            tag = "无后缀 = 06b 产出（不缩尾）"
-        log(f"    [keep] {c:<28} {tag:<22} n={n_raw:,} ({pct(n_raw,len(df))})  "
-            f"p1={s.quantile(.01):.3f} p5={s.quantile(.05):.3f} "
-            f"p50={s.median():.3f} p95={s.quantile(.95):.3f} "
-            f"p99={s.quantile(.99):.3f} max={s.max():.3f} mean={s.mean():.3f}")
-    
-    # ln 倍数：_x / _y 各一份
-    MUL_LN_SPEC = [
-        ("pre_rev_mul_ly",    "rev",    "营收倍数"),
-        ("pre_ebitda_mul_ly", "ebitda", "EBITDA 倍数"),
-        ("pre_ebit_mul_ly",   "ebit",   "EBIT 倍数"),
-        ("pre_pbt_mul_ly",    "pbt",    "PBT 倍数"),
-        ("pre_ta_mul_ly",     "ta",     "总资产倍数"),
-        ("pre_eq_mul_ly",     "eq",     "净资产倍数"),
-        ("pre_pat_mul_ly",    "pat",    "PAT 倍数"),
-        ("pre_np_mul_ly",     "np",     "NP 倍数"),
-        ("pre_na_mul_ly",     "na",     "NA 倍数"),
-        ("pre_cl_mul_ly",     "cl",     "CL 倍数"),
-        ("pre_cap_mul_ly",    "cap",    "CAP 倍数"),
-        ("post_rev_mul_fy",   "post_rev",   "事后营收倍数"),
-        ("post_ebitda_mul_fy","post_ebitda","事后EBITDA倍数"),
-        ("post_ebit_mul_fy",  "post_ebit",  "事后EBIT倍数"),
-        ("bench_rev",         "text_rev",   "文本peer营收基准"),
-        ("bench_ebitda",      "text_ebitda","文本peer EBITDA基准"),
-        ("bench_ebit",        "text_ebit",  "文本peer EBIT基准"),
-        ("bench_pbt",         "text_pbt",   "文本peer PBT基准"),
-        ("bench_ta",          "text_ta",    "文本peer TA基准"),
-        ("bench_eq",          "text_eq",    "文本peer EQ基准"),
+            tag = "无后缀 = 06b 产出"
+        log(f"    [keep] {c:<28} {tag:<16} n={n_raw:,} ({pct(n_raw,len(df))})  "
+            f"p1={s.quantile(.01):.3f} p50={s.median():.3f} "
+            f"p95={s.quantile(.95):.3f} p99={s.quantile(.99):.3f} "
+            f"mean={s.mean():.3f}")
+
+    # ln 倍数: 直接用实际存在的源列名, 生成 ln_{suf}{suffix}
+    MUL_LN_MAP = [
+        # (源列后缀_x, 源列后缀_y, 输出后缀 suf, 说明)
+        ("pre_rev_mul_ly_x",   "pre_rev_mul_ly_y",   "rev",    "营收倍数"),
+        ("pre_ebitda_mul_ly_x","pre_ebitda_mul_ly_y","ebitda", "EBITDA 倍数"),
+        ("pre_ebit_mul_ly_x",  "pre_ebit_mul_ly_y",  "ebit",   "EBIT 倍数"),
+        ("pre_pbt_mul_ly_x",   "pre_pbt_mul_ly_y",   "pbt",    "PBT 倍数"),
+        ("pre_ta_mul_ly_x",    "pre_ta_mul_ly_y",    "ta",     "总资产倍数"),
+        ("pre_eq_mul_ly_x",    "pre_eq_mul_ly_y",    "eq",     "净资产倍数"),
+        ("pre_pat_mul_ly",     None,                 "pat",    "PAT 倍数(06b)"),
+        ("pre_np_mul_ly",      None,                 "np",     "NP 倍数(06b)"),
+        ("pre_na_mul_ly",      None,                 "na",     "NA 倍数(06b)"),
+        ("pre_cl_mul_ly",      None,                 "cl",     "CL 倍数(06b)"),
+        ("pre_cap_mul_ly",     None,                 "cap",    "CAP 倍数(06b)"),
     ]
-    log(f"\n  --- ln 倍数 ---")
-    # 查找规则：merge 后同名列必带 _x/_y 后缀（06a vs 06b 冲突），
-    # 所以直接按 "{base}_x" / "{base}_y" 查找，不再用无后缀 base 做门卫；
-    # bench_* 若未冲突（06a 无 bench 列，merge 后保留原名）则退回 base 本身。
-    for base, suf, desc in MUL_LN_SPEC:
-        srcs = []
-        for suffix, src_tag in (("_x", "06a原始"), ("_y", "06b")):
-            src = f"{base}{suffix}"
-            if src in df.columns:
-                srcs.append((src, suffix, src_tag))
-        if not srcs and base in df.columns:
-            srcs.append((base, "", "无后缀"))
-        if not srcs:
-            log(f"    [MISS] {desc:<16} 源列 {base}_x/{base}_y 均缺失（也无无后缀列）")
-            continue
-        for src, suffix, src_tag in srcs:
+    log(f"\n  --- ln 倍数（不缩尾）---")
+    _gen_ln = []
+    for xcol, ycol, suf, desc in MUL_LN_MAP:
+        for src, suffix, tag in ((xcol, "_x", "06a原始"),
+                                 (ycol, "_y", "06b缩尾")):
+            if src is None or src not in df.columns:
+                continue
             v = pd.to_numeric(df[src], errors="coerce")
             newc = f"ln_{suf}{suffix}"
             df[newc] = np.where(v > 0, np.log(v), np.nan)
             nn = df[newc].notna().sum()
-            log(f"    {newc:<22} src={src:<24} {src_tag:<8} "
+            _gen_ln.append(newc)
+            log(f"    {newc:<22} src={src:<24} {tag:<8} "
                 f"valid={nn:,} ({pct(nn,len(df))})  "
                 f"mean={df[newc].mean():.3f} sd={df[newc].std():.3f}")
-    add_step("log_multiples", len(df))    
-    
-    # ── STEP 5 财务比率 ──
+    log(f"  [生成] 共 {len(_gen_ln)} 个 ln_ 倍数列: {_gen_ln}")
+    add_step("log_multiples", len(df))
+
+    # ── STEP 5 财务比率（ln 类不缩尾 + safe_ratio 保护） ──
     banner("STEP 5 — 财务比率 & 规模变量")
-    tar_rev = pd.to_numeric(safe_get(df, "pre_deal_tar_rev_rev_last_avail_yr"), errors="coerce")
-    tar_eb  = pd.to_numeric(safe_get(df, "pre_deal_tar_ebitda_last_avail_yr"), errors="coerce")
-    tar_ta  = pd.to_numeric(safe_get(df, "pre_deal_tar_ta_last_avail_yr"), errors="coerce")
-    tar_eq  = pd.to_numeric(safe_get(df, "pre_deal_tar_eq_last_avail_yr"), errors="coerce")
-    tar_pat = pd.to_numeric(safe_get(df, "pre_deal_tar_pat_last_avail_yr"), errors="coerce")
+    tar_rev = pd.to_numeric(safe_get(df, "pre_deal_tar_rev_rev_last_avail_yr"),
+                            errors="coerce")
+    tar_eb  = pd.to_numeric(safe_get(df, "pre_deal_tar_ebitda_last_avail_yr"),
+                            errors="coerce")
+    tar_ta  = pd.to_numeric(safe_get(df, "pre_deal_tar_ta_last_avail_yr"),
+                            errors="coerce")
+    tar_eq  = pd.to_numeric(safe_get(df, "pre_deal_tar_eq_last_avail_yr"),
+                            errors="coerce")
+    tar_pat = pd.to_numeric(safe_get(df, "pre_deal_tar_pat_last_avail_yr"),
+                            errors="coerce")
 
     df["tar_ebitda_margin"] = safe_ratio(tar_eb, tar_rev)
-    df["tar_leverage"]      = safe_ratio(tar_ta - tar_eq, tar_ta)
+    df["tar_leverage"]      = safe_ratio(tar_ta - tar_eq, tar_ta, min_den=1e-6)
     df["tar_roa"]           = safe_ratio(tar_pat, tar_ta)
     df["ln_tar_size"]       = np.where(tar_ta > 0, np.log(tar_ta), np.nan)
     if "tar_rev_rev_yr__1" in df.columns:
@@ -309,47 +360,63 @@ def main():
         df["tar_rev_growth"] = np.nan
         log(f"    [MISS] tar_rev_growth: 缺 tar_rev_rev_yr__1")
 
-    acq_rev = pd.to_numeric(safe_get(df, "pre_deal_acq_rev_rev_last_avail_yr"), errors="coerce")
-    acq_eb  = pd.to_numeric(safe_get(df, "pre_deal_acq_ebitda_last_avail_yr"), errors="coerce")
-    acq_ta  = pd.to_numeric(safe_get(df, "pre_deal_acq_ta_last_avail_yr"), errors="coerce")
-    acq_eq  = pd.to_numeric(safe_get(df, "pre_deal_acq_eq_last_avail_yr"), errors="coerce")
-    acq_pat = pd.to_numeric(safe_get(df, "pre_deal_acq_pat_last_avail_yr"), errors="coerce")
+    acq_rev = pd.to_numeric(safe_get(df, "pre_deal_acq_rev_rev_last_avail_yr"),
+                            errors="coerce")
+    acq_eb  = pd.to_numeric(safe_get(df, "pre_deal_acq_ebitda_last_avail_yr"),
+                            errors="coerce")
+    acq_ta  = pd.to_numeric(safe_get(df, "pre_deal_acq_ta_last_avail_yr"),
+                            errors="coerce")
+    acq_eq  = pd.to_numeric(safe_get(df, "pre_deal_acq_eq_last_avail_yr"),
+                            errors="coerce")
+    acq_pat = pd.to_numeric(safe_get(df, "pre_deal_acq_pat_last_avail_yr"),
+                            errors="coerce")
 
     df["acq_ebitda_margin"] = safe_ratio(acq_eb, acq_rev)
-    df["acq_leverage"]      = safe_ratio(acq_ta - acq_eq, acq_ta)
+    df["acq_leverage"]      = safe_ratio(acq_ta - acq_eq, acq_ta, min_den=1e-6)
     df["acq_roa"]           = safe_ratio(acq_pat, acq_ta)
     df["ln_acq_size"]       = np.where(acq_ta > 0, np.log(acq_ta), np.nan)
     df["ln_rel_size"]       = np.where((acq_ta > 0) & tar_ta.notna() & (tar_ta > 0),
                                        np.log(acq_ta / tar_ta), np.nan)
 
-    pt_rev = pd.to_numeric(safe_get(df, "post_deal_tar_rev_rev_1st_avail_yr"), errors="coerce")
-    pt_eb  = pd.to_numeric(safe_get(df, "post_deal_tar_ebitda_1st_avail_yr"), errors="coerce")
-    pt_ta  = pd.to_numeric(safe_get(df, "post_deal_tar_ta_1st_avail_yr"), errors="coerce")
-    pt_pat = pd.to_numeric(safe_get(df, "post_deal_tar_pat_1st_avail_yr"), errors="coerce")
-    pt_eq  = pd.to_numeric(safe_get(df, "post_deal_tar_eq_1st_avail_yr"), errors="coerce")
+    pt_rev = pd.to_numeric(safe_get(df, "post_deal_tar_rev_rev_1st_avail_yr"),
+                           errors="coerce")
+    pt_eb  = pd.to_numeric(safe_get(df, "post_deal_tar_ebitda_1st_avail_yr"),
+                           errors="coerce")
+    pt_ta  = pd.to_numeric(safe_get(df, "post_deal_tar_ta_1st_avail_yr"),
+                           errors="coerce")
+    pt_pat = pd.to_numeric(safe_get(df, "post_deal_tar_pat_1st_avail_yr"),
+                           errors="coerce")
+    pt_eq  = pd.to_numeric(safe_get(df, "post_deal_tar_eq_1st_avail_yr"),
+                           errors="coerce")
 
     df["tar_post_ebitda_margin"] = safe_ratio(pt_eb, pt_rev)
     df["tar_post_roa"]           = safe_ratio(pt_pat, pt_ta)
     df["ln_tar_post_size"]       = np.where(pt_ta > 0, np.log(pt_ta), np.nan)
-    df["tar_post_leverage"]      = safe_ratio(pt_ta - pt_eq, pt_ta)
+    df["tar_post_leverage"]      = safe_ratio(pt_ta - pt_eq, pt_ta, min_den=1e-6)
 
-    pa_rev = pd.to_numeric(safe_get(df, "post_deal_acq_rev_rev_1st_avail_yr"), errors="coerce")
-    pa_eb  = pd.to_numeric(safe_get(df, "post_deal_acq_ebitda_1st_avail_yr"), errors="coerce")
-    pa_ta  = pd.to_numeric(safe_get(df, "post_deal_acq_ta_1st_avail_yr"), errors="coerce")
-    pa_pat = pd.to_numeric(safe_get(df, "post_deal_acq_pat_1st_avail_yr"), errors="coerce")
-    pa_eq  = pd.to_numeric(safe_get(df, "post_deal_acq_shareholder_funds_1st_avail_yr"), errors="coerce")
+    pa_rev = pd.to_numeric(safe_get(df, "post_deal_acq_rev_rev_1st_avail_yr"),
+                           errors="coerce")
+    pa_eb  = pd.to_numeric(safe_get(df, "post_deal_acq_ebitda_1st_avail_yr"),
+                           errors="coerce")
+    pa_ta  = pd.to_numeric(safe_get(df, "post_deal_acq_ta_1st_avail_yr"),
+                           errors="coerce")
+    pa_pat = pd.to_numeric(safe_get(df, "post_deal_acq_pat_1st_avail_yr"),
+                           errors="coerce")
+    pa_eq  = pd.to_numeric(
+        safe_get(df, "post_deal_acq_shareholder_funds_1st_avail_yr"),
+        errors="coerce")
 
     df["acq_post_ebitda_margin"] = safe_ratio(pa_eb, pa_rev)
     df["acq_post_roa"]           = safe_ratio(pa_pat, pa_ta)
     df["ln_acq_post_size"]       = np.where(pa_ta > 0, np.log(pa_ta), np.nan)
-    df["acq_post_leverage"]      = safe_ratio(pa_ta - pa_eq, pa_ta)
+    df["acq_post_leverage"]      = safe_ratio(pa_ta - pa_eq, pa_ta, min_den=1e-6)
 
     win_cols = [c for c in [
-        "tar_ebitda_margin", "tar_leverage", "tar_rev_growth", "tar_roa", "ln_tar_size",
-        "acq_ebitda_margin", "acq_leverage", "acq_roa", "ln_acq_size", "ln_rel_size",
-        "tar_post_ebitda_margin", "tar_post_roa", "ln_tar_post_size", "tar_post_leverage",
-        "acq_post_ebitda_margin", "acq_post_roa", "ln_acq_post_size", "acq_post_leverage"
-    ] if c in df.columns]
+        "tar_ebitda_margin", "tar_leverage", "tar_rev_growth", "tar_roa",
+        "acq_ebitda_margin", "acq_leverage", "acq_roa",
+        "tar_post_ebitda_margin", "tar_post_roa", "tar_post_leverage",
+        "acq_post_ebitda_margin", "acq_post_roa", "acq_post_leverage"
+    ] if c in df.columns and c not in NO_WINSOR]
     for c in win_cols:
         b = (df[c].min(), df[c].quantile(.01), df[c].median(),
              df[c].quantile(.99), df[c].max())
@@ -360,7 +427,8 @@ def main():
             f"p50={b[2]:.3f} p99={b[3]:.3f} max={b[4]:.3f}")
         log(f"             after  min={a[0]:.3f} p1={a[1]:.3f} "
             f"p50={a[2]:.3f} p99={a[3]:.3f} max={a[4]:.3f}")
-    log(f"  winsorised {len(win_cols)} cols @ [{WINSOR_LO},{WINSOR_HI}]")
+    log(f"  winsorised {len(win_cols)} cols @ [{WINSOR_LO},{WINSOR_HI}] "
+        f"(已排除 {len(NO_WINSOR & set(df.columns))} 个 ln/比率类)")
     for c in ["tar_ebitda_margin", "tar_leverage", "tar_rev_growth", "tar_roa",
               "acq_ebitda_margin", "acq_leverage", "acq_roa", "ln_rel_size",
               "tar_post_leverage", "acq_post_leverage"]:
@@ -389,8 +457,8 @@ def main():
     ad = parse_date_robust(safe_get(df, "announced_d", warn=False))
     cd = parse_date_robust(safe_get(df, "completed_d", warn=False))
     ac = parse_date_robust(safe_get(df, "assumed_comp_d", warn=False))
-    log(f"  announced_d   parsed OK: {ad.notna().sum():,} / {len(ad):,}")
-    log(f"  completed_d   parsed OK: {cd.notna().sum():,} / {len(cd):,}")
+    log(f"  announced_d    parsed OK: {ad.notna().sum():,} / {len(ad):,}")
+    log(f"  completed_d    parsed OK: {cd.notna().sum():,} / {len(cd):,}")
     log(f"  assumed_comp_d parsed OK: {ac.notna().sum():,} / {len(ac):,}")
 
     off = (pd.to_numeric(safe_get(df, "assumed_comp_d", warn=False), errors="coerce")
@@ -409,7 +477,8 @@ def main():
                              np.log(df["DaysToCompletion"]), np.nan)
     log(f"  DaysToCompletion valid={df['DaysToCompletion'].notna().sum():,} "
         f"({pct(df['DaysToCompletion'].notna().sum(), len(df))})  "
-        f"p50={df['DaysToCompletion'].median():.0f} p90={df['DaysToCompletion'].quantile(.9):.0f}")
+        f"p50={df['DaysToCompletion'].median():.0f} "
+        f"p90={df['DaysToCompletion'].quantile(.9):.0f}")
     log(f"  ln_days         valid={df['ln_days'].notna().sum():,}")
     add_step("days_to_completion", len(df))
 
@@ -423,7 +492,8 @@ def main():
     df["common_law_acq"] = (df["legal_origin_acq"] == "English").astype("Int64")
     df["classification_distance_tar"] = tar_cc.map(CLASSIFICATION_DIST)
     df["classification_distance_acq"] = acq_cc.map(CLASSIFICATION_DIST)
-    naics_col = next((c for c in ["tar_primary_naics_code", "tar_primary_nace_code",
+    naics_col = next((c for c in ["tar_primary_naics_code",
+                                  "tar_primary_nace_code",
                                   "tar_primary_sic_code"] if c in df.columns), None)
     if naics_col:
         df["national_class"] = safe_get(df, naics_col).notna().astype("Int64")
@@ -431,9 +501,11 @@ def main():
     else:
         df["national_class"] = pd.NA
         log(f"  [WARN] 无 naics/nace/sic 列")
-    log(f"  common_law_tar=1: {int(df['common_law_tar'].sum(skipna=True)):,} "
+    log(f"  common_law_tar=1: "
+        f"{int(df['common_law_tar'].sum(skipna=True)):,} "
         f"({pct(df['common_law_tar'].sum(skipna=True), len(df))})")
-    log(f"  common_law_acq=1: {int(df['common_law_acq'].sum(skipna=True)):,} "
+    log(f"  common_law_acq=1: "
+        f"{int(df['common_law_acq'].sum(skipna=True)):,} "
         f"({pct(df['common_law_acq'].sum(skipna=True), len(df))})")
     add_step("legal_origin", len(df))
 
@@ -477,8 +549,10 @@ def main():
     banner("STEP 11 — Table-6 别名变量")
     df["tar_ta_for_t6"]  = tar_ta
     df["tar_rev_for_t6"] = tar_rev
-    df["tar_mktcap_for_t6"] = pd.to_numeric(safe_get(df, "deal_equity_value"), errors="coerce")
-    df["tar_ev_for_t6"]     = pd.to_numeric(safe_get(df, "deal_modelled_enterprise_value"), errors="coerce")
+    df["tar_mktcap_for_t6"] = pd.to_numeric(
+        safe_get(df, "deal_equity_value"), errors="coerce")
+    df["tar_ev_for_t6"] = pd.to_numeric(
+        safe_get(df, "deal_modelled_enterprise_value"), errors="coerce")
     df["tar_mb_for_t6"] = np.where((tar_eq != 0) & tar_eq.notna(),
                                    df["tar_mktcap_for_t6"] / tar_eq, np.nan)
     for c in ["tar_ta_for_t6", "tar_rev_for_t6", "tar_mktcap_for_t6",
@@ -491,7 +565,8 @@ def main():
     banner("STEP 12 — has_comment")
     if "has_lm_litigious" in df.columns:
         df["has_comment"] = df["has_lm_litigious"].notna().astype("Int64")
-        log(f"  has_comment=1: {int(df['has_comment'].sum(skipna=True)):,} "
+        log(f"  has_comment=1: "
+            f"{int(df['has_comment'].sum(skipna=True)):,} "
             f"({pct(df['has_comment'].sum(skipna=True), len(df))})")
     else:
         df["has_comment"] = pd.NA
@@ -499,10 +574,10 @@ def main():
 
     # ── STEP 13 SIC-peer 占位 ──
     banner("STEP 13 — SIC-peer 占位 (NaN)")
-    for e in ["ln_sic_rev","ln_sic_ebitda","ln_sic_ebit",
-              "cross_industry_alt","peer_overlap_frac",
-              "ind_text_diversity","ind_text_diversity_w",
-              "sic_coverage_rate","acq_tar_similarity"]:
+    for e in ["ln_sic_rev", "ln_sic_ebitda", "ln_sic_ebit",
+              "cross_industry_alt", "peer_overlap_frac",
+              "ind_text_diversity", "ind_text_diversity_w",
+              "sic_coverage_rate", "acq_tar_similarity"]:
         if e not in df.columns:
             df[e] = np.nan
 
@@ -513,16 +588,28 @@ def main():
     # ── STEP 15 Stata 导出 ──
     banner("STEP 15 — 导出 Stata .dta")
     df_save = df[[c for c in COLS_TO_SAVE if c in df.columns]].copy()
-    if "_row_id" in df_save.columns:
-        df_save = df_save.rename(columns={"_row_id": "row_id"})
+
+    # 15a: 列名 -> Stata 合法名 (_year_source -> s_year_source 等)
+    rename_map = build_rename_map(df_save.columns)
+    n_renamed = sum(1 for k, v in rename_map.items() if k != v)
+    df_save = df_save.rename(columns=rename_map)
+    log(f"  [STATA NAMES] 重命名 {n_renamed} 列（首字符非字母/含非法字符）")
+    for k, v in list(rename_map.items())[:6] if n_renamed else []:
+        if k != v:
+            log(f"      {k}  ->  {v}")
+    if n_renamed > 6:
+        log(f"      ... 共 {n_renamed} 列, 详见日志")
+
+    # 15b: value_labels 的 key 必须与写出时的变量名一致
     value_labels = {}
     for col in ["common_law_tar", "common_law_acq", "national_class"]:
-        if col in df_save.columns:
-            df_save[col] = df_save[col].astype("float64")
-            value_labels[col] = {0.0: "No / Civil", 1.0: "Yes / Common"}
+        if col in rename_map:
+            df_save[rename_map[col]] = df_save[rename_map[col]].astype("float64")
+            value_labels[rename_map[col]] = {0.0: "No / Civil", 1.0: "Yes / Common"}
     for col in df_save.columns:
         if str(df_save[col].dtype) in ("Int64", "Int32", "boolean"):
             df_save[col] = df_save[col].astype("float64")
+
     pyreadstat.write_dta(df_save, OUT_DTA, version=15,
                          variable_value_labels=value_labels)
     log(f"  dta: {OUT_DTA}  shape={df_save.shape}")
@@ -535,21 +622,16 @@ def main():
     pd.DataFrame(steps).to_csv(OUT_STEPS, index=False, encoding="utf-8-sig")
 
     banner("FINAL — 关键变量覆盖率")
-    key = ["ln_rev_x","ln_rev_y","ln_ebitda_x","ln_ebitda_y","ln_ebit_x","ln_ebit_y",
-           "ln_pbt_x","ln_pbt_y","ln_ta_x","ln_ta_y","ln_eq_x","ln_eq_y",
-           "ln_pat_x","ln_pat_y","ln_np_x","ln_np_y","ln_na_x","ln_na_y",
-           "ln_cl_x","ln_cl_y","ln_cap_x","ln_cap_y",
-           "ln_post_rev_x","ln_post_rev_y","ln_post_ebitda_x","ln_post_ebitda_y",
-           "ln_post_ebit_x","ln_post_ebit_y",
-           "ln_text_rev","ln_text_ebitda","ln_text_ebit",
-           "ln_text_pbt","ln_text_ta","ln_text_eq",
+    key = ["ln_rev_x", "ln_rev_y", "ln_ebitda_x", "ln_ebitda_y",
+           "ln_ebit_x", "ln_ebit_y", "ln_pbt_x", "ln_pbt_y",
+           "ln_ta_x", "ln_ta_y", "ln_eq_x", "ln_eq_y",
+           "ln_text_rev", "ln_text_ebitda", "ln_text_ebit",
            "text_peer_sim_mean",
-           "ln_days","ln_deal_value",
-           "tar_ebitda_margin","acq_ebitda_margin",
-           "tar_post_leverage","acq_post_leverage",
-           "target_age","acquirer_age","common_law_tar",
-           "tar_ta_for_t6","tar_rev_for_t6",
-           "tar_mktcap_for_t6","tar_ev_for_t6","tar_mb_for_t6"]
+           "ln_days", "ln_deal_value", "ln_tar_size", "ln_acq_size",
+           "ln_rel_size", "tar_ebitda_margin", "acq_ebitda_margin",
+           "tar_post_leverage", "acq_post_leverage",
+           "target_age", "acquirer_age", "common_law_tar",
+           "tar_ta_for_t6", "tar_rev_for_t6"]
     for c in key:
         if c in df.columns:
             nn = df[c].notna().sum()
@@ -557,6 +639,7 @@ def main():
         else:
             log(f"  {c:<24} {'MISSING':>10}")
     log(f"\n  done in {time.time()-_T0:.1f}s")
+
 
 def build_whitelist(df):
     base = [
@@ -631,7 +714,9 @@ def build_whitelist(df):
         "ln_rel_size", "ln_acq_post_size", "acq_post_ebitda_margin",
         "acq_post_roa", "acq_post_leverage",
         "tar_country_code", "acq_country_code",
+        #JFE 关键变量
         "stock_traded_gdp_tar", "stock_traded_gdp_acq",
+        
         "common_law_tar", "common_law_acq",
         "tar_ta_for_t6", "tar_rev_for_t6", "tar_mktcap_for_t6",
         "tar_ev_for_t6", "tar_mb_for_t6",
@@ -643,11 +728,20 @@ def build_whitelist(df):
         "n_peers_pbt", "n_peers_ta", "n_peers_eq",
         "bench_rev", "bench_ebitda", "bench_ebit", "bench_pbt", "bench_ta", "bench_eq",
         "has_comment",
+        
+        # ---- 用户特别指定：股权（JFE 关键变量）----
+        "stake_acq_pct", "stake_init_pct",
+        "deal_n_tar","deal_n_acq",
+
+
     ]
-    vd = [c for c in df.columns if c.startswith("ven_is_") or c == "ven_unmapped"]
+
+    # 动态追加: 白名单之外的新列（去重，保序）
+    seen = set(base)
     extra = [c for c in df.columns
-             if c not in base + vd and c not in (DEAL, "_row_id")]
-    allc = base + vd + extra
+             if c not in seen and c != DEAL]
+    seen.update(extra)
+    allc = base + extra
 
     records = []
     for c in allc:
@@ -662,6 +756,7 @@ def build_whitelist(df):
     log(f"  var_check: {OUT_VAR_CHECK}")
     return allc
 
+
 if __name__ == "__main__":
     try:
         main()
@@ -670,4 +765,4 @@ if __name__ == "__main__":
         flush_log()
         raise
     finally:
-        flush_log()          # 正常/异常都刷盘
+        flush_log()
