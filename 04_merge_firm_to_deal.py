@@ -180,7 +180,7 @@ MASTER_KEEP = [
     "pre_eq_mul_ly", "pre_cap_mul_ly",
     # ---- DaysToCompletion / ln_days ----
     "DaysToCompletion", "ln_days",
-# ---- Rumor (01a) ----
+    # ---- Rumor (01a) ----
     "rumor_jfe", "has_rumor_status", "rumor_lead_days", "rumor_lead_yr",
     "completed_flag", "completed_strict",     # [FIX] 补 completed_strict
     "deal_status", "deal_status_clean",       # [FIX] 补 deal_status_clean
@@ -210,6 +210,7 @@ MASTER_KEEP = [
     "expected_comp_d", "postponed_d", "assumed_comp_d",
     # ---- SIC 原始码（tar_sic3 / acq_sic3 派生用）----
     "tar_primary_sic_code", "acq_primary_sic_code",
+    
     # ---- 用户特别指定：股权（JFE 关键变量）----
     "stake_acq_pct", "stake_init_pct",
     # ---- 其他金额（备用）----
@@ -224,6 +225,8 @@ FIRM_KEEP =[DEAL] +  list(FIRM_RENAME.keys()) + [
     "tar_listed", "acq_listed", "ven_listed",
     "tar_ipo_d", "acq_ipo_d", "ven_ipo_d",
     "ven_incorp_yr",
+    #JFE变量
+    "deal_n_tar","deal_n_acq",
     # 实体键（原样保留，不 rename）
     "tar_bvd_id_num", "acq_bvd_id_num",
     "tar_orbis_id_num", "acq_orbis_id_num",
@@ -247,6 +250,7 @@ NOT_IN_02_03_NEED_MODULE = [
     "tar_total_advisor", "acq_total_advisor",
     "post_rev_mul_fy", "post_ebitda_mul_fy", "post_ebit_mul_fy",
     "pre_deal_ven_rev_rev_last_avail_yr", "pre_deal_ven_ta_last_avail_yr",
+    
     "stock_traded_gdp_tar", "stock_traded_gdp_acq",
 ]
 
